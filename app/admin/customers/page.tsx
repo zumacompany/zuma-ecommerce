@@ -25,7 +25,7 @@ export default async function AdminCustomersPage() {
       <div className="mt-6 rounded-xl bg-card p-4 border border-borderc">
         {(!customers || customers.length === 0) ? (
           <div className="text-sm text-muted">
-            <EmptyState title="No customers" description="No customers yet." ctaLabel="Refresh" onClick={() => window.location.reload()} />
+            <EmptyState title="No customers" description="No customers yet." ctaLabel="Refresh" ctaHref="/admin/customers" />
           </div>
         ) : (
           <table className="w-full text-left text-sm">

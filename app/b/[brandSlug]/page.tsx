@@ -71,7 +71,7 @@ export default async function BrandPage({ params, searchParams }: Props) {
     )
   }
 
-  const regions: string[] = Array.from(new Set((offers ?? []).map((o: any) => o.region_code))).filter(Boolean)
+  const regions: string[] = Array.from(new Set((offers ?? []).map((o: any) => String(o.region_code ?? '')))).filter(Boolean) as string[]
 
   // Determine selected region (prefer URL param if valid)
   const selectedRegion = regionParam && regions.includes(regionParam) ? regionParam : regions[0] ?? null

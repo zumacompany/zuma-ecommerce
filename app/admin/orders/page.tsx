@@ -22,7 +22,7 @@ export default async function AdminOrdersPage() {
       <div className="mt-6 rounded-xl bg-card p-4 border border-borderc">
         {(!orders || orders.length === 0) ? (
           <div className="text-sm text-muted">
-            <EmptyState title="No orders" description="No orders yet." ctaLabel="Reload" onClick={() => window.location.reload()} />
+            <EmptyState title="No orders" description="No orders yet." ctaLabel="Reload" ctaHref="/admin/orders" />
           </div>
         ) : (
           <table className="w-full text-left text-sm">

@@ -8,8 +8,19 @@ if (!url || !anon) {
   console.warn('Client Supabase não configurado (NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY)')
 }
 
-export const supabase = createClient(url, anon, {
+export const supabase = (url && anon) ? createClient(url, anon, {
   auth: {
     persistSession: true
   }
-})
+}) : {
+  // noop client when envs not set — prevents build-time crashes and allows UI to render
+  storage: {
+    from: () => ({
+      list: async () => ({ data: [], error: null }),
+      upload: async () => ({ data: null, error: new Error('Supabase not configured') })
+    })
+  },
+  auth: {
+    signInWithOtp: async () => ({ error: new Error('Supabase not configured') })
+  }
+} as any
