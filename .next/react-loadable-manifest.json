@@ -1,1 +1,16 @@
-{}
+{
+  "components/admin/BrandsAdmin.tsx -> ../../lib/supabase/browser": {
+    "id": 9997,
+    "files": [
+      "static/chunks/53-cfba9a5fa0d939df.js",
+      "static/chunks/997.c585a85d06c9ceb7.js"
+    ]
+  },
+  "components/admin/SiteAdmin.tsx -> ../../lib/supabase/browser": {
+    "id": 9997,
+    "files": [
+      "static/chunks/53-cfba9a5fa0d939df.js",
+      "static/chunks/997.c585a85d06c9ceb7.js"
+    ]
+  }
+}

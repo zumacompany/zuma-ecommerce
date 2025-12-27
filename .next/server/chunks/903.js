@@ -1,0 +1,1 @@
+"use strict";exports.id=903,exports.ids=[903],exports.modules={8903:(s,e,_)=>{_.d(e,{supabase:()=>A});var o=_(5157);let r=process.env.NEXT_PUBLIC_SUPABASE_URL??"",t=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY??"";r&&t||console.warn("Client Supabase n\xe3o configurado (NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY)");let A=(0,o.eI)(r,t,{auth:{persistSession:!0}})}};

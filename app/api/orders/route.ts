@@ -4,10 +4,33 @@ import { supabaseAdmin } from '../../../lib/supabase/server'
 export async function POST(req: Request) {
   try {
     const body = await req.json()
-    const { customer_name, customer_email, customer_whatsapp, payment_method_id, items, currency, session_id } = body
+    // support legacy field names and new checkout fields
+    const customer_name = body.name ?? body.customer_name
+    const customer_email = body.email ?? body.customer_email
+    const whatsappPrefix = body.whatsappPrefix ?? body.whatsapp_prefix ?? null
+    const whatsappNumber = body.whatsappNumber ?? body.whatsapp_number ?? null
+    const country = body.country ?? null
+    const province = body.province ?? null
+
+    const payment_method_id = body.payment_method_id
+    const items = body.items
+    const currency = body.currency
+    const session_id = body.session_id
 
     if (!customer_name || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ error: 'customer_name and items are required' }, { status: 400 })
+    }
+
+    // normalize whatsapp to e164 if prefix/number provided, else keep legacy value if present
+    const digits = (s: any) => String(s ?? '').replace(/\D/g, '')
+    let customer_whatsapp: string | null = null
+    if (whatsappPrefix || whatsappNumber) {
+      const pref = digits(whatsappPrefix)
+      const num = digits(whatsappNumber)
+      if (!pref || !num) return NextResponse.json({ error: 'Invalid whatsapp prefix/number' }, { status: 400 })
+      customer_whatsapp = `+${pref}${num}`
+    } else if (body.customer_whatsapp) {
+      customer_whatsapp = body.customer_whatsapp
     }
 
     // Fetch payment method snapshot (if provided)
@@ -22,11 +45,30 @@ export async function POST(req: Request) {
       payment_method_snapshot = pm
     }
 
-    // Call RPC create_order (atomic)
+    // Upsert customer (strict) via RPC to get customer_id
+    let customer_id: string | null = null
+    try {
+      const rpcIn: any = {
+        p_name: customer_name,
+        p_email: customer_email ?? null,
+        p_whatsapp: customer_whatsapp ?? null,
+        p_country: country,
+        p_province: province
+      }
+      const { data: custData, error: custErr } = await supabaseAdmin.rpc('upsert_customer_strict', rpcIn as any)
+      if (custErr) return NextResponse.json({ error: custErr.message }, { status: 500 })
+      const custRes = Array.isArray(custData) ? custData[0] : custData
+      customer_id = custRes?.customer_id ?? null
+    } catch (err: any) {
+      return NextResponse.json({ error: err?.message ?? 'customer upsert failed' }, { status: 500 })
+    }
+
+    // Call RPC create_order (atomic) — include customer_id and snapshot fields
     const rpcPayload = {
+      p_customer_id: customer_id,
       p_customer_name: customer_name,
       p_customer_email: customer_email ?? null,
-      p_customer_whatsapp: customer_whatsapp,
+      p_customer_whatsapp: customer_whatsapp ?? null,
       p_payment_method_id: payment_method_id ?? null,
       p_payment_method_snapshot: payment_method_snapshot ? payment_method_snapshot : null,
       p_items: JSON.stringify(items),
