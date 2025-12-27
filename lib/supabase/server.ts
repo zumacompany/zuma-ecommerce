@@ -14,3 +14,6 @@ export function createClient() {
     }
   })
 }
+
+// Convenience singleton for server-side operations (service role key)
+export const supabaseAdmin = createClient()
