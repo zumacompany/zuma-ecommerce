@@ -1,10 +1,52 @@
 "use client"
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import StatusBadge from "./StatusBadge"
 
 export default function OrdersQueueClient({ initial }: { initial: any[] }) {
   const [orders, setOrders] = useState(initial)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Realtime subscription to keep the queue updated
+
+  useEffect(() => {
+    let channel: any = null
+    import('../../lib/supabase/browser').then(({ supabase }) => {
+      if (!supabase || typeof (supabase as any).channel !== 'function') return
+      channel = (supabase as any)
+        .channel('public:orders')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload: any) => {
+          try {
+            const evt = payload.eventType
+            const newRow = payload.new
+            const oldRow = payload.old
+            if (evt === 'INSERT') {
+              setOrders((o) => [newRow, ...(o ?? [])])
+            } else if (evt === 'UPDATE') {
+              setOrders((o) => {
+                if (!o) return o
+                const idx = o.findIndex((x) => x.id === newRow.id)
+                if (newRow.status === 'pending') {
+                  if (idx === -1) return [newRow, ...o]
+                  return o.map((x) => x.id === newRow.id ? newRow : x)
+                } else {
+                  // remove from queue if status no longer pending
+                  return o.filter((x) => x.id !== newRow.id)
+                }
+              })
+            } else if (evt === 'DELETE') {
+              setOrders((o) => o ? o.filter((x) => x.id !== oldRow.id) : o)
+            }
+          } catch (e) {
+            // ignore errors from unexpected payloads
+          }
+        })
+        .subscribe()
+    }).catch(() => { })
+
+    return () => { if (channel && typeof channel.unsubscribe === 'function') channel.unsubscribe() }
+  }, [])
+
 
   async function updateStatus(id: string, status: string) {
     setLoading(true)
@@ -48,10 +90,10 @@ export default function OrdersQueueClient({ initial }: { initial: any[] }) {
               <td className="px-4 py-3">{o.order_number}</td>
               <td className="px-4 py-3">{new Date(o.created_at).toLocaleString()}</td>
               <td className="px-4 py-3">{o.customer_whatsapp ? (
-                <a href={`https://wa.me/${o.customer_whatsapp.replace(/[^\d+]/g,'')}`} target="_blank" rel="noreferrer" className="text-zuma-500">Open WhatsApp</a>
+                <a href={`https://wa.me/${o.customer_whatsapp.replace(/[^\d+]/g, '')}`} target="_blank" rel="noreferrer" className="text-zuma-500">Open WhatsApp</a>
               ) : <span className="text-sm text-muted">No phone</span>}</td>
               <td className="px-4 py-3">{o.total_amount} {o.currency}</td>
-              <td className="px-4 py-3"><span className="px-2 py-1 rounded bg-zuma-50 text-sm">{o.status}</span></td>
+              <td className="px-4 py-3"><StatusBadge status={o.status} /></td>
               <td className="px-4 py-3 flex gap-2">
                 <button className="px-3 py-1 rounded bg-green-600 text-white" onClick={() => updateStatus(o.id, 'delivered')} disabled={loading}>Mark delivered</button>
                 <button className="px-3 py-1 rounded bg-red-600 text-white" onClick={() => updateStatus(o.id, 'cancelled')} disabled={loading}>Cancel</button>

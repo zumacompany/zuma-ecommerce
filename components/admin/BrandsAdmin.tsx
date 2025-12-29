@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react"
 import { btnPrimary, btnSecondary, input } from "../ui/classes"
 import EmptyState from "./EmptyState"
+import StatusBadge from "./StatusBadge"
 
 type Brand = { id: string; name: string; slug: string }
 
@@ -10,7 +11,7 @@ export default function BrandsAdmin() {
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<Brand[] | null>(null)
 
-  const [categories, setCategories] = useState<Array<{id:string;name:string}> | null>(null)
+  const [categories, setCategories] = useState<Array<{ id: string; name: string }> | null>(null)
 
   // create form state
   const [showCreate, setShowCreate] = useState(false)
@@ -20,7 +21,7 @@ export default function BrandsAdmin() {
   const [newLogoFile, setNewLogoFile] = useState<File | null>(null)
   const [newHeroFile, setNewHeroFile] = useState<File | null>(null)
   const [newDescription, setNewDescription] = useState("")
-  const [newStatus, setNewStatus] = useState<'active'|'inactive'>('active')
+  const [newStatus, setNewStatus] = useState<'active' | 'inactive'>('active')
 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState("")
@@ -29,7 +30,7 @@ export default function BrandsAdmin() {
   const [editLogoFile, setEditLogoFile] = useState<File | null>(null)
   const [editHeroFile, setEditHeroFile] = useState<File | null>(null)
   const [editDescription, setEditDescription] = useState("")
-  const [editStatus, setEditStatus] = useState<'active'|'inactive'>('active')
+  const [editStatus, setEditStatus] = useState<'active' | 'inactive'>('active')
 
   async function fetchBrands() {
     setLoading(true)
@@ -58,7 +59,22 @@ export default function BrandsAdmin() {
     }
   }
 
-  useEffect(() => { fetchBrands(); fetchCategories() }, [])
+  useEffect(() => {
+    fetchBrands(); fetchCategories()
+
+    // Realtime subscription: refresh list on any change
+    let channel: any = null
+    import('../../lib/supabase/browser').then(({ supabase }) => {
+      if (!supabase || typeof (supabase as any).channel !== 'function') return
+      channel = (supabase as any).channel('public:brands')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'brands' }, () => {
+          fetchBrands()
+        })
+        .subscribe()
+    }).catch(() => { })
+
+    return () => { if (channel && typeof channel.unsubscribe === 'function') channel.unsubscribe() }
+  }, [])
 
   function slugify(name: string) {
     return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
@@ -319,7 +335,7 @@ export default function BrandsAdmin() {
                       <td className="px-4 py-3">{b.logo_path ? <img src={b.logo_path} alt={b.name} className="h-10 w-10 object-cover rounded" /> : <div className="text-xs text-muted">No data</div>}</td>
                       <td className="px-4 py-3">{b.name}<div className="text-sm text-muted">{b.slug}</div></td>
                       <td className="px-4 py-3">{b.category?.name ?? 'No data'}</td>
-                      <td className="px-4 py-3"><span className={`px-2 py-1 rounded ${b.status === 'active' ? 'bg-zuma-50' : 'bg-muted'}`}>{b.status}</span></td>
+                      <td className="px-4 py-3"><StatusBadge status={b.status} /></td>
                       <td className="px-4 py-3 flex gap-2">
                         <button className={btnSecondary} onClick={() => startEdit(b)}>Edit</button>
                         <button className={btnSecondary} onClick={() => toggleStatus(b.id, b.status)}>{b.status === 'active' ? 'Deactivate' : 'Activate'}</button>

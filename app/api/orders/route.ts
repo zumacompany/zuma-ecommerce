@@ -49,16 +49,21 @@ export async function POST(req: Request) {
     let customer_id: string | null = null
     try {
       const rpcIn: any = {
+        p_whatsapp_e164: customer_whatsapp ?? null,
+        p_whatsapp_display: customer_name, // default display name to customer provided name
         p_name: customer_name,
         p_email: customer_email ?? null,
-        p_whatsapp: customer_whatsapp ?? null,
         p_country: country,
-        p_province: province
+        p_province: province,
+        p_order_created_at: new Date().toISOString()
       }
       const { data: custData, error: custErr } = await supabaseAdmin.rpc('upsert_customer_strict', rpcIn as any)
       if (custErr) return NextResponse.json({ error: custErr.message }, { status: 500 })
       const custRes = Array.isArray(custData) ? custData[0] : custData
-      customer_id = custRes?.customer_id ?? null
+      // The RPC returns returning id into cid; which is a scalar uuid if called via SQL, 
+      // but via supabase-js RPC it might be returned directly or as an object depending on function definition.
+      // Based on the schema 'returns uuid', it should return the string directly.
+      customer_id = custRes
     } catch (err: any) {
       return NextResponse.json({ error: err?.message ?? 'customer upsert failed' }, { status: 500 })
     }

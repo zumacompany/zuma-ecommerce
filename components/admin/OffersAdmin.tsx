@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { btnPrimary, btnSecondary, input } from '../ui/classes'
 import EmptyState from './EmptyState'
+import StatusBadge from './StatusBadge'
 
 export default function OffersAdmin() {
   const [loading, setLoading] = useState(true)
@@ -20,7 +21,7 @@ export default function OffersAdmin() {
   const [newDenomCurrency, setNewDenomCurrency] = useState('MZN')
   const [newDenomValue, setNewDenomValue] = useState<number | ''>('')
   const [newPrice, setNewPrice] = useState<number | ''>('')
-  const [newStatus, setNewStatus] = useState<'active'|'inactive'>('active')
+  const [newStatus, setNewStatus] = useState<'active' | 'inactive'>('active')
 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editBrand, setEditBrand] = useState<string | null>(null)
@@ -28,7 +29,7 @@ export default function OffersAdmin() {
   const [editDenomCurrency, setEditDenomCurrency] = useState('MZN')
   const [editDenomValue, setEditDenomValue] = useState<number | ''>('')
   const [editPrice, setEditPrice] = useState<number | ''>('')
-  const [editStatus, setEditStatus] = useState<'active'|'inactive'>('active')
+  const [editStatus, setEditStatus] = useState<'active' | 'inactive'>('active')
 
   async function fetchOffers() {
     setLoading(true)
@@ -68,7 +69,22 @@ export default function OffersAdmin() {
     }
   }
 
-  useEffect(() => { fetchOffers(); fetchBrands(); fetchRegions() }, [])
+  useEffect(() => {
+    fetchOffers(); fetchBrands(); fetchRegions()
+
+    // Realtime subscription: refresh list on any change
+    let channel: any = null
+    import('../../lib/supabase/browser').then(({ supabase }) => {
+      if (!supabase || typeof (supabase as any).channel !== 'function') return
+      channel = (supabase as any).channel('public:offers')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'offers' }, () => {
+          fetchOffers()
+        })
+        .subscribe()
+    }).catch(() => { })
+
+    return () => { if (channel && typeof channel.unsubscribe === 'function') channel.unsubscribe() }
+  }, [])
 
   function applyFilters(list: any[]) {
     return list.filter((o) => {
@@ -281,7 +297,7 @@ export default function OffersAdmin() {
                       <td className="px-4 py-3">{o.region_code ?? 'No data'}</td>
                       <td className="px-4 py-3">{o.denomination_value ?? 'No data'} {o.denomination_currency ?? ''}</td>
                       <td className="px-4 py-3">{o.price ?? 'No data'}</td>
-                      <td className="px-4 py-3"><span className={`px-2 py-1 rounded ${o.status === 'active' ? 'bg-zuma-50' : 'bg-muted'}`}>{o.status}</span></td>
+                      <td className="px-4 py-3"><StatusBadge status={o.status} /></td>
                       <td className="px-4 py-3 flex gap-2"><button className={btnSecondary} onClick={() => startEdit(o)}>Edit</button><button className={btnSecondary} onClick={() => toggleStatus(o.id, o.status)}>{o.status === 'active' ? 'Deactivate' : 'Activate'}</button></td>
                     </tr>
                   )

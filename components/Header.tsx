@@ -1,8 +1,16 @@
 "use client";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import ThemeToggle from "./ThemeToggle";
 
 export default function Header() {
+  const pathname = usePathname();
+
+  // Hide header on admin pages
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
+
   return (
     <header className="sticky top-0 z-40 backdrop-blur-sm border-b border-borderc bg-card">
       <div className="container flex items-center justify-between py-3">
@@ -13,14 +21,14 @@ export default function Header() {
         </div>
 
         <nav className="hidden md:flex gap-6">
-          <Link href="/c/gift-cards" className="text-sm font-medium">
+          <Link href="/c/gift-cards" className="text-sm font-medium hover:text-zuma-500 transition-colors">
             Gift Cards
           </Link>
-          <Link href="/c/streaming" className="text-sm font-medium">
+          <Link href="/c/streaming" className="text-sm font-medium hover:text-zuma-500 transition-colors">
             Streaming
           </Link>
-          <Link href="/c/crypto" className="text-sm font-medium">
-            Crypto
+          <Link href="/c/crypto" className="text-sm font-medium hover:text-zuma-500 transition-colors">
+            Cripto
           </Link>
         </nav>
 

@@ -5,6 +5,30 @@
       "static/chunks/_app-pages-browser_lib_supabase_browser_ts.js"
     ]
   },
+  "components/admin/CategoriesAdmin.tsx -> ../../lib/supabase/browser": {
+    "id": "components/admin/CategoriesAdmin.tsx -> ../../lib/supabase/browser",
+    "files": [
+      "static/chunks/_app-pages-browser_lib_supabase_browser_ts.js"
+    ]
+  },
+  "components/admin/OffersAdmin.tsx -> ../../lib/supabase/browser": {
+    "id": "components/admin/OffersAdmin.tsx -> ../../lib/supabase/browser",
+    "files": [
+      "static/chunks/_app-pages-browser_lib_supabase_browser_ts.js"
+    ]
+  },
+  "components/admin/OrdersQueueClient.tsx -> ../../lib/supabase/browser": {
+    "id": "components/admin/OrdersQueueClient.tsx -> ../../lib/supabase/browser",
+    "files": [
+      "static/chunks/_app-pages-browser_lib_supabase_browser_ts.js"
+    ]
+  },
+  "components/admin/PaymentMethodsAdmin.tsx -> ../../lib/supabase/browser": {
+    "id": "components/admin/PaymentMethodsAdmin.tsx -> ../../lib/supabase/browser",
+    "files": [
+      "static/chunks/_app-pages-browser_lib_supabase_browser_ts.js"
+    ]
+  },
   "components/admin/SiteAdmin.tsx -> ../../lib/supabase/browser": {
     "id": "components/admin/SiteAdmin.tsx -> ../../lib/supabase/browser",
     "files": [

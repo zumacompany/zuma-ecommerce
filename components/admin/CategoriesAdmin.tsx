@@ -35,6 +35,19 @@ export default function CategoriesAdmin() {
 
   useEffect(() => {
     fetchCategories()
+
+    // Realtime subscription: refresh list on any change
+    let channel: any = null
+    import('../../lib/supabase/browser').then(({ supabase }) => {
+      if (!supabase || typeof (supabase as any).channel !== 'function') return
+      channel = (supabase as any).channel('public:categories')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'categories' }, () => {
+          fetchCategories()
+        })
+        .subscribe()
+    }).catch(() => {})
+
+    return () => { if (channel && typeof channel.unsubscribe === 'function') channel.unsubscribe() }
   }, [])
 
   async function createCategory(e: React.FormEvent) {

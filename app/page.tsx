@@ -11,8 +11,8 @@ export default function Home() {
       <HeroClient />
 
       <div className="container max-w-[1200px] mt-8">
-        <h2 className="text-lg font-semibold">Categories</h2>
-        <p className="mt-2 text-sm text-muted">Browse categories to find brands and offers.</p>
+        <h2 className="text-xl font-bold tracking-tight">Categorias</h2>
+        <p className="mt-1 text-sm text-muted">Explore categorias para encontrar as melhores ofertas.</p>
         <CategoriesClient />
         <FeaturedBrandsClient />
         <TrustPointsClient />

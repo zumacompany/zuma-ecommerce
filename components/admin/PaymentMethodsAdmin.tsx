@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { btnPrimary, btnSecondary, input } from '../ui/classes'
 import EmptyState from './EmptyState'
+import StatusBadge from './StatusBadge'
 
 export default function PaymentMethodsAdmin() {
   const [loading, setLoading] = useState(true)
@@ -11,22 +12,22 @@ export default function PaymentMethodsAdmin() {
   const [showCreate, setShowCreate] = useState(false)
 
   const [newName, setNewName] = useState('')
-  const [newType, setNewType] = useState<'manual'|'stripe'|'mpesa'>('manual')
+  const [newType, setNewType] = useState<'manual' | 'stripe' | 'mpesa'>('manual')
   const [newInstructions, setNewInstructions] = useState('')
   const [newNIB, setNewNIB] = useState('')
   const [newAccountName, setNewAccountName] = useState('')
   const [newPhone, setNewPhone] = useState('')
-  const [newStatus, setNewStatus] = useState<'active'|'inactive'>('active')
+  const [newStatus, setNewStatus] = useState<'active' | 'inactive'>('active')
   const [newSortOrder, setNewSortOrder] = useState<number | ''>('')
 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
-  const [editType, setEditType] = useState<'manual'|'stripe'|'mpesa'>('manual')
+  const [editType, setEditType] = useState<'manual' | 'stripe' | 'mpesa'>('manual')
   const [editInstructions, setEditInstructions] = useState('')
   const [editNIB, setEditNIB] = useState('')
   const [editAccountName, setEditAccountName] = useState('')
   const [editPhone, setEditPhone] = useState('')
-  const [editStatus, setEditStatus] = useState<'active'|'inactive'>('active')
+  const [editStatus, setEditStatus] = useState<'active' | 'inactive'>('active')
   const [editSortOrder, setEditSortOrder] = useState<number | ''>('')
 
   async function fetchMethods() {
@@ -45,7 +46,22 @@ export default function PaymentMethodsAdmin() {
     }
   }
 
-  useEffect(() => { fetchMethods() }, [])
+  useEffect(() => {
+    fetchMethods()
+
+    // Realtime subscription: refresh list on any change
+    let channel: any = null
+    import('../../lib/supabase/browser').then(({ supabase }) => {
+      if (!supabase || typeof (supabase as any).channel !== 'function') return
+      channel = (supabase as any).channel('public:payment_methods')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'payment_methods' }, () => {
+          fetchMethods()
+        })
+        .subscribe()
+    }).catch(() => { })
+
+    return () => { if (channel && typeof channel.unsubscribe === 'function') channel.unsubscribe() }
+  }, [])
 
   async function createMethod(e: React.FormEvent) {
     e.preventDefault()
@@ -190,7 +206,7 @@ export default function PaymentMethodsAdmin() {
                 <option value="inactive">Inactive</option>
               </select>
               <input className={input} placeholder="Sort order" type="number" value={newSortOrder as any} onChange={(e) => setNewSortOrder(e.target.value === '' ? '' : Number(e.target.value))} />
-              <div/>
+              <div />
             </div>
 
             <div>
@@ -243,7 +259,7 @@ export default function PaymentMethodsAdmin() {
                     <tr key={m.id} className="border-t border-borderc">
                       <td className="px-4 py-3">{m.name}</td>
                       <td className="px-4 py-3">{m.type}</td>
-                      <td className="px-4 py-3"><span className={`px-2 py-1 rounded ${m.status === 'active' ? 'bg-zuma-50' : 'bg-muted'}`}>{m.status}</span></td>
+                      <td className="px-4 py-3"><StatusBadge status={m.status} /></td>
                       <td className="px-4 py-3">{m.sort_order ?? '—'}</td>
                       <td className="px-4 py-3 flex gap-2"><button className={btnSecondary} onClick={() => startEdit(m)}>Edit</button><button className={btnSecondary} onClick={() => deleteMethod(m.id)}>Delete</button></td>
                     </tr>

@@ -1,17 +1,9 @@
 {
+  "/api/analytics/route": "app/api/analytics/route.js",
   "/page": "app/page.js",
+  "/api/orders/route": "app/api/orders/route.js",
   "/c/[categorySlug]/page": "app/c/[categorySlug]/page.js",
   "/b/[brandSlug]/page": "app/b/[brandSlug]/page.js",
-  "/api/site-content/route": "app/api/site-content/route.js",
-  "/api/analytics/route": "app/api/analytics/route.js",
-  "/api/categories/route": "app/api/categories/route.js",
-  "/api/featured-brands/route": "app/api/featured-brands/route.js",
-  "/api/offers/route": "app/api/offers/route.js",
-  "/api/admin/categories/route": "app/api/admin/categories/route.js",
-  "/api/admin/brands/route": "app/api/admin/brands/route.js",
-  "/admin/page": "app/admin/page.js",
-  "/admin/payment-methods/page": "app/admin/payment-methods/page.js",
-  "/admin/orders/page": "app/admin/orders/page.js",
-  "/admin/categories/page": "app/admin/categories/page.js",
-  "/admin/brands/page": "app/admin/brands/page.js"
+  "/checkout/page": "app/checkout/page.js",
+  "/admin/page": "app/admin/page.js"
 }
