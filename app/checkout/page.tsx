@@ -95,7 +95,7 @@ export default async function CheckoutPage({ searchParams }: Props) {
               <div className="mt-2 text-sm text-muted">{offer.brand?.name} — {offer.region_code}</div>
               <div className="mt-2">{offer.denomination_currency} {offer.denomination_value}</div>
               <div className="mt-2">Quantity: {qty}</div>
-              <div className="mt-3 font-semibold">Total: {(offer.price * qty).toFixed(2)} {offer.denomination_currency}</div>
+              <div className="mt-3 font-semibold">Total: {(offer.price * qty).toFixed(2)} MZN</div>
             </div>
           </div>
         </aside>

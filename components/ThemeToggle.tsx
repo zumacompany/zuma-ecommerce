@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { btnSecondary } from "./ui/classes";
+import { Moon, Sun } from "lucide-react";
 
 type Theme = "light" | "dark";
 function applyTheme(theme: Theme) {
@@ -31,8 +31,17 @@ export default function ThemeToggle() {
   };
 
   return (
-    <button type="button" onClick={toggle} className={btnSecondary}>
-      {theme === "dark" ? "Light mode" : "Dark mode"}
+    <button
+      type="button"
+      onClick={toggle}
+      className="flex items-center justify-center min-w-[44px] min-h-[44px] w-11 h-11 rounded-md hover:bg-muted/10 text-muted transition-colors"
+      aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+    >
+      {theme === "dark" ? (
+        <Sun className="w-5 h-5" />
+      ) : (
+        <Moon className="w-5 h-5" />
+      )}
     </button>
   );
 }

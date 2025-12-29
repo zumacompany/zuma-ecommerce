@@ -1,12 +1,13 @@
 import Link from 'next/link'
 import { supabaseAdmin } from '../../../../lib/supabase/server'
+import OrderDelivery from '../../../../components/admin/OrderDelivery'
 
 type Props = { params: { orderNumber: string } }
 
 export default async function AdminOrderDetails({ params }: Props) {
   const { orderNumber } = params
 
-  const { data: order, error: orderErr } = await supabaseAdmin.from('orders').select('id, order_number, customer_name, customer_email, customer_whatsapp, status, payment_method_snapshot, total_amount, currency, created_at, customer:customers(id,name,email,whatsapp)').eq('order_number', orderNumber).maybeSingle()
+  const { data: order, error: orderErr } = await supabaseAdmin.from('orders').select('id, order_number, customer_name, customer_email, customer_whatsapp, status, payment_method_snapshot, total_amount, currency, created_at, delivery_codes, admin_notes, customer:customers(id,name,email,whatsapp_e164)').eq('order_number', orderNumber).maybeSingle()
 
   if (orderErr) {
     return (
@@ -34,9 +35,9 @@ export default async function AdminOrderDetails({ params }: Props) {
       <div className="rounded-xl bg-card p-6 border border-borderc">
         <h2 className="text-xl font-semibold">Order {order.order_number}</h2>
         <div className="mt-2 text-sm text-muted">Status: <strong>{order.status}</strong></div>
-        <div className="mt-2 text-sm">Customer: {order.customer && order.customer.length > 0 ? (
+        <div className="mt-2 text-sm">Customer: {order.customer && order.customer ? (
           <>
-            <a className="text-zuma-500" href={`/admin/customers/${order.customer[0].id}`}>{order.customer[0].name}</a> · {order.customer[0].email} · {order.customer[0].whatsapp}
+            <a className="text-zuma-500" href={`/admin/customers/${order.customer.id}`}>{order.customer.name}</a> · {order.customer.email} · {order.customer.whatsapp_e164}
           </>
         ) : (
           <>{order.customer_name} · {order.customer_whatsapp} · {order.customer_email}</>
@@ -44,6 +45,12 @@ export default async function AdminOrderDetails({ params }: Props) {
         <div className="mt-2 text-sm">Total: {order.total_amount} {order.currency}</div>
         <div className="mt-2 text-sm">Payment snapshot: {order.payment_method_snapshot?.name ?? 'N/A'}</div>
       </div>
+
+      <OrderDelivery
+        orderId={order.id}
+        initialCodes={order.delivery_codes}
+        initialNotes={order.admin_notes}
+      />
 
       <div className="rounded-xl bg-card p-6 border border-borderc">
         <h3 className="text-lg font-semibold">Status history</h3>

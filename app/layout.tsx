@@ -1,5 +1,6 @@
 import '../styles/globals.css'
 import Header from '../components/Header'
+import Footer from '../components/Footer'
 
 export const metadata = {
   title: 'Zuma',
@@ -19,7 +20,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <Header />
-        {children}
+        <div className="flex-1">
+          {children}
+        </div>
+        <Footer />
       </body>
     </html>
   )

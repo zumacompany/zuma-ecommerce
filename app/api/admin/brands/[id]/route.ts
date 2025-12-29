@@ -4,19 +4,18 @@ import { supabaseAdmin } from '../../../../../lib/supabase/server'
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   try {
     const body = await req.json()
-    const { name, slug, category_id, logo_path, hero_image_path, description_md, status } = body || {}
-    if (!name && !slug && !category_id && !logo_path && !hero_image_path && !description_md && !status) return NextResponse.json({ error: 'nothing to update' }, { status: 400 })
+    const { name, slug, category_id, logo_path, description_md, status } = body || {}
+    if (!name && !slug && !category_id && !logo_path && !description_md && !status) return NextResponse.json({ error: 'nothing to update' }, { status: 400 })
 
     const updates: any = {}
     if (name) updates.name = name
     if (slug) updates.slug = slug
     if (category_id) updates.category_id = category_id
     if (logo_path !== undefined) updates.logo_path = logo_path
-    if (hero_image_path !== undefined) updates.hero_image_path = hero_image_path
     if (description_md !== undefined) updates.description_md = description_md
     if (status) updates.status = status
 
-    const { data, error } = await supabaseAdmin.from('brands').update(updates).eq('id', params.id).select('id, name, slug, status, category:categories(id, name), logo_path, hero_image_path').maybeSingle()
+    const { data, error } = await supabaseAdmin.from('brands').update(updates).eq('id', params.id).select('id, name, slug, status, category:categories(id, name), logo_path').maybeSingle()
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
     return NextResponse.json({ data })

@@ -12,7 +12,8 @@ describe('ThemeToggle', () => {
     render(<ThemeToggle />)
     const btn = screen.getByRole('button')
     expect(document.documentElement.classList.contains('dark')).toBe(true)
-    expect(btn.textContent).toContain('Light mode')
+    // Button uses an aria-label for accessible name instead of visible text
+    expect(btn.getAttribute('aria-label')).toBe('Switch to light mode')
   })
 
   it('toggles theme and updates localStorage', () => {

@@ -1,17 +1,32 @@
 "use client"
 import Link from 'next/link'
 
-export default function EmptyState({ title = 'No data', description, ctaLabel, ctaHref, onClick }: { title?: string; description?: string; ctaLabel?: string; ctaHref?: string; onClick?: () => void }) {
+export default function EmptyState({
+  title = 'No data',
+  description,
+  ctaLabel,
+  ctaHref,
+  onClick,
+  icon
+}: {
+  title?: string;
+  description?: string;
+  ctaLabel?: string;
+  ctaHref?: string;
+  onClick?: () => void
+  icon?: React.ReactNode
+}) {
   return (
-    <div className="rounded-lg border border-borderc p-6 text-center">
-      <h3 className="text-lg font-semibold">{title}</h3>
-      {description && <p className="mt-2 text-sm text-muted">{description}</p>}
+    <div className="rounded-2xl border border-dashed border-borderc p-12 text-center flex flex-col items-center justify-center">
+      {icon && <div className="mb-4 text-muted/40">{icon}</div>}
+      <h3 className="text-xl font-bold text-foreground">{title}</h3>
+      {description && <p className="mt-3 text-sm text-muted max-w-xs mx-auto leading-relaxed">{description}</p>}
       {(ctaLabel && (ctaHref || onClick)) && (
-        <div className="mt-4">
+        <div className="mt-8">
           {ctaHref ? (
-            <Link href={ctaHref} className="inline-block px-4 py-2 rounded bg-zuma-500 text-white">{ctaLabel}</Link>
+            <Link href={ctaHref} className="inline-flex items-center justify-center px-6 py-2.5 rounded-xl bg-zuma-500 text-white text-sm font-semibold hover:bg-zuma-600 transition-all shadow-lg shadow-zuma-500/20">{ctaLabel}</Link>
           ) : (
-            <button onClick={onClick} className="inline-block px-4 py-2 rounded bg-zuma-500 text-white">{ctaLabel}</button>
+            <button onClick={onClick} className="inline-flex items-center justify-center px-6 py-2.5 rounded-xl bg-zuma-500 text-white text-sm font-semibold hover:bg-zuma-600 transition-all shadow-lg shadow-zuma-500/20">{ctaLabel}</button>
           )}
         </div>
       )}

@@ -1,9 +1,11 @@
 {
-  "/api/analytics/route": "app/api/analytics/route.js",
   "/page": "app/page.js",
-  "/api/orders/route": "app/api/orders/route.js",
-  "/c/[categorySlug]/page": "app/c/[categorySlug]/page.js",
   "/b/[brandSlug]/page": "app/b/[brandSlug]/page.js",
-  "/checkout/page": "app/checkout/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/site-content/route": "app/api/site-content/route.js",
+  "/api/admin/categories/[id]/route": "app/api/admin/categories/[id]/route.js",
+  "/admin/customers/page": "app/admin/customers/page.js",
+  "/admin/categories/page": "app/admin/categories/page.js",
+  "/admin/brands/page": "app/admin/brands/page.js",
   "/admin/page": "app/admin/page.js"
 }

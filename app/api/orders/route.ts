@@ -45,7 +45,7 @@ export async function POST(req: Request) {
       payment_method_snapshot = pm
     }
 
-    // Upsert customer (strict) via RPC to get customer_id
+    // Upsert customer by WhatsApp (allows recurring customers)
     let customer_id: string | null = null
     try {
       const rpcIn: any = {
@@ -57,7 +57,7 @@ export async function POST(req: Request) {
         p_province: province,
         p_order_created_at: new Date().toISOString()
       }
-      const { data: custData, error: custErr } = await supabaseAdmin.rpc('upsert_customer_strict', rpcIn as any)
+      const { data: custData, error: custErr } = await supabaseAdmin.rpc('upsert_customer_by_whatsapp', rpcIn as any)
       if (custErr) return NextResponse.json({ error: custErr.message }, { status: 500 })
       const custRes = Array.isArray(custData) ? custData[0] : custData
       // The RPC returns returning id into cid; which is a scalar uuid if called via SQL, 
@@ -76,7 +76,7 @@ export async function POST(req: Request) {
       p_customer_whatsapp: customer_whatsapp ?? null,
       p_payment_method_id: payment_method_id ?? null,
       p_payment_method_snapshot: payment_method_snapshot ? payment_method_snapshot : null,
-      p_items: JSON.stringify(items),
+      p_items: items, // Pass as array, Supabase will convert to JSONB
       p_currency: currency ?? (items[0]?.currency ?? 'USD')
     }
 

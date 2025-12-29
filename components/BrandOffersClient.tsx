@@ -86,18 +86,18 @@ export default function BrandOffersClient({
         </div>
 
         <div className="rounded-xl bg-card p-6 border border-borderc mb-6">
-          <h3 className="text-lg font-semibold">How it works</h3>
+          <h3 className="text-lg font-semibold">Como funciona</h3>
           {brand.description_md ? (
             <div className="mt-3 text-sm text-muted whitespace-pre-wrap leading-relaxed">{brand.description_md}</div>
           ) : (
-            <div className="mt-3 text-sm text-muted">No data — add brand description in Admin.</div>
+            <div className="mt-3 text-sm text-muted">Sem dados — adicione a descrição da marca no Admin.</div>
           )}
         </div>
 
         <div className="rounded-xl bg-card p-6 border border-borderc mb-6">
-          <label className="text-sm font-medium">Region</label>
+          <label className="text-sm font-medium">Região</label>
           {(!regions || regions.length === 0) ? (
-            <div className="mt-2 text-sm text-muted">No data — add offers for this brand in Admin.</div>
+            <div className="mt-2 text-sm text-muted">Sem dados — adicione ofertas para esta marca no Admin.</div>
           ) : (
             <select value={region ?? ''} onChange={(e) => setRegion(e.target.value)} className={`mt-2 w-full ${input}`}>
               {regions.map((r) => (
@@ -109,14 +109,14 @@ export default function BrandOffersClient({
 
         <div>
           {(!offers || offers.length === 0) ? (
-            <div className="rounded-xl bg-card p-6 border border-borderc">No data — no offers available for this region.</div>
+            <div className="rounded-xl bg-card p-6 border border-borderc">Sem dados — não há ofertas disponíveis para esta região.</div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {offers.map((o) => (
                 <div key={o.id} onClick={() => selectOffer(o.id)} className={`rounded-xl p-4 border cursor-pointer transition-all ${selectedOfferId === o.id ? 'border-zuma-500 shadow-[0_0_0_1px_rgba(59,130,246,0.5)] bg-zuma-50/10' : 'border-borderc bg-card hover:border-zuma-200'}`}>
-                  <div className="text-sm text-muted font-medium uppercase tracking-wide">{o.denomination_currency}</div>
+                  <div className="text-sm text-muted font-medium uppercase tracking-wide">MZN</div>
                   <div className="text-2xl font-bold mt-1">{o.denomination_value}</div>
-                  <div className="mt-2 text-sm text-zuma-600 font-medium">Price: {o.price} {o.denomination_currency}</div>
+                  <div className="mt-2 text-sm text-zuma-600 font-medium">Preço: {o.price.toLocaleString('pt-PT', { style: 'currency', currency: 'MZN' })}</div>
                 </div>
               ))}
             </div>
@@ -127,20 +127,20 @@ export default function BrandOffersClient({
       <aside className="lg:col-span-1">
         <div className="sticky top-24">
           <div className="rounded-xl bg-card p-6 border border-borderc shadow-sm">
-            <h3 className="text-lg font-semibold mb-4">Order summary</h3>
+            <h3 className="text-lg font-semibold mb-4">Resumo do Pedido</h3>
             {selectedOffer ? (
               <div className="space-y-4">
                 <div className="flex items-center justify-between border-b border-borderc pb-4">
-                  <span className="text-sm text-muted">Product</span>
+                  <span className="text-sm text-muted">Produto</span>
                   <span className="font-medium">{brand.name}</span>
                 </div>
                 <div className="flex items-center justify-between border-b border-borderc pb-4">
-                  <span className="text-sm text-muted">Value</span>
-                  <span className="font-medium">{selectedOffer.denomination_value} {selectedOffer.denomination_currency}</span>
+                  <span className="text-sm text-muted">Valor</span>
+                  <span className="font-medium">{selectedOffer.denomination_value} MZN</span>
                 </div>
 
                 <div className="flex items-center justify-between border-b border-borderc pb-4">
-                  <span className="text-sm text-muted">Quantity</span>
+                  <span className="text-sm text-muted">Quantidade</span>
                   <div className="flex items-center gap-3">
                     <button className="h-8 w-8 rounded border border-borderc flex items-center justify-center hover:bg-muted/10 transition-colors" onClick={() => changeQty(-1)}>-</button>
                     <span className="font-medium w-4 text-center">{qty}</span>
@@ -150,15 +150,15 @@ export default function BrandOffersClient({
 
                 <div className="flex items-center justify-between pt-2">
                   <span className="text-base font-semibold">Total</span>
-                  <span className="text-xl font-bold text-zuma-600">{(qty * selectedOffer.price).toFixed(2)} {selectedOffer.denomination_currency}</span>
+                  <span className="text-xl font-bold text-zuma-600">{(qty * selectedOffer.price).toLocaleString('pt-PT', { style: 'currency', currency: 'MZN' })}</span>
                 </div>
 
                 <button className={`w-full ${btnPrimary} mt-2`} onClick={clickBuy}>
-                  Proceed to Checkout
+                  Ir para Pagamento
                 </button>
               </div>
             ) : (
-              <p className="mt-2 text-sm text-muted">No data — select an option.</p>
+              <p className="mt-2 text-sm text-muted">Sem dados — selecione uma opção.</p>
             )}
           </div>
         </div>
