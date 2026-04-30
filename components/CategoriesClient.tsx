@@ -1,6 +1,7 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useI18n } from "../lib/i18n";
 
 type Category = {
   id: string;
@@ -11,11 +12,12 @@ type Category = {
 }
 
 export default function CategoriesClient() {
+  const { t } = useI18n();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<Category[] | null>(null);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     let mounted = true;
     setLoading(true);
     fetch('/api/categories')
@@ -26,7 +28,7 @@ export default function CategoriesClient() {
           setError(json.error)
           setData(null)
         } else {
-          setData(Array.isArray(json.data) ? json.data : [])
+          setData(Array.isArray(json.data) ? json.data.filter((c: any) => c.slug !== 'sem-categoria') : [])
           setError(null)
         }
       })
@@ -45,10 +47,12 @@ export default function CategoriesClient() {
     }
   }, [])
 
+  useEffect(() => load(), [load])
+
   if (loading) {
     return (
       <section className="mt-8 mb-12 container max-w-[1200px] px-4">
-        <h2 className="text-lg font-bold tracking-tight mb-4">Browse Categories</h2>
+        <h2 className="text-lg font-bold tracking-tight mb-4">{t('website.browseCategories')}</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
           <div className="h-40 rounded-3xl bg-muted/10 animate-pulse" />
           <div className="h-40 rounded-3xl bg-muted/10 animate-pulse" />
@@ -58,7 +62,25 @@ export default function CategoriesClient() {
     )
   }
 
-  if (error || !data || data.length === 0) return null;
+  if (error) {
+    return (
+      <section className="mt-8 mb-12 container max-w-[1200px] px-4">
+        <div className="rounded-xl bg-card p-6 border border-borderc text-center">
+          <h3 className="text-lg font-semibold">{t('common.error')}</h3>
+          <p className="mt-2 text-sm text-muted">{error}</p>
+          <button
+            type="button"
+            onClick={() => load()}
+            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/90 transition-colors"
+          >
+            {t('common.retry') || 'Tentar novamente'}
+          </button>
+        </div>
+      </section>
+    )
+  }
+
+  if (!data || data.length === 0) return null;
 
   // Helper fallback if Admin hasn't set colors yet
   const getFallbackStyle = (slug: string, name: string) => {
@@ -72,7 +94,7 @@ export default function CategoriesClient() {
     <section className="mt-8 mb-4">
       <div className="container max-w-[1200px] px-4">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold tracking-tight">Browse Categories</h2>
+          <h2 className="text-lg font-bold tracking-tight">{t('website.browseCategories')}</h2>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
@@ -87,7 +109,7 @@ export default function CategoriesClient() {
               <Link
                 key={c.id}
                 href={`/c/${c.slug}`}
-                className="group flex flex-col rounded-3xl overflow-hidden shadow-sm border border-borderc hover:shadow-xl transition-all duration-300 bg-white"
+                className="group flex flex-col rounded-3xl overflow-hidden shadow-sm border border-borderc hover:shadow-xl transition-all duration-300 bg-card"
               >
                 {/* Top Half - Colored */}
                 <div className={`${style.bg} h-24 sm:h-32 flex items-center justify-center relative`}>
@@ -96,9 +118,9 @@ export default function CategoriesClient() {
                   </span>
                 </div>
 
-                {/* Bottom Half - White & Text */}
-                <div className="bg-white p-4 flex items-center justify-center h-16 sm:h-20">
-                  <h4 className="text-sm sm:text-lg font-medium text-center leading-tight text-gray-800">
+                {/* Bottom Half - Card & Text */}
+                <div className="bg-card p-4 flex items-center justify-center h-16 sm:h-20">
+                  <h4 className="text-sm sm:text-lg font-medium text-center leading-tight text-foreground">
                     {c.name}
                   </h4>
                 </div>

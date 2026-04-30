@@ -3,8 +3,10 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ShieldCheck, Lock } from "lucide-react";
+import { useI18n } from "../lib/i18n";
 
 export default function Footer() {
+    const { t } = useI18n();
     const [whatsapp, setWhatsapp] = useState<string | null>(null);
     const pathname = usePathname();
     const currentYear = new Date().getFullYear();
@@ -35,7 +37,7 @@ export default function Footer() {
                         <span className="font-black text-3xl tracking-tighter uppercase">ZUMA</span>
                         {whatsapp && (
                             <div className="mt-4 flex flex-col gap-2">
-                                <span className="text-xs uppercase tracking-widest opacity-60 font-bold">Contacte-nos</span>
+                                <span className="text-xs uppercase tracking-widest opacity-60 font-bold">{t('website.footer.contactUs')}</span>
                                 <a
                                     href={`https://wa.me/${whatsapp.replace(/\D/g, '')}`}
                                     className="flex items-center gap-2 text-primary-fg hover:text-white transition-colors"
@@ -53,17 +55,17 @@ export default function Footer() {
 
                     {/* Links */}
                     <div className="flex flex-col gap-2 text-sm font-medium opacity-90">
-                        <h4 className="font-bold text-lg mb-2 opacity-100">Ajuda</h4>
-                        <Link href="/about" className="hover:underline">Sobre Nós</Link>
-                        <Link href="/refunds" className="hover:underline">Política de Reembolsos</Link>
-                        <Link href="/privacy" className="hover:underline">Privacidade</Link>
-                        <Link href="/cookies" className="hover:underline">Cookies</Link>
-                        <Link href="/faq" className="hover:underline">Perguntas Frequentes</Link>
+                        <h4 className="font-bold text-lg mb-2 opacity-100">{t('website.footer.help')}</h4>
+                        <Link href="/about" className="hover:underline">{t('website.footer.about')}</Link>
+                        <Link href="/refunds" className="hover:underline">{t('website.footer.refunds')}</Link>
+                        <Link href="/privacy" className="hover:underline">{t('website.footer.privacy')}</Link>
+                        <Link href="/cookies" className="hover:underline">{t('website.footer.cookies')}</Link>
+                        <Link href="/faq" className="hover:underline">{t('website.footer.faqs')}</Link>
                     </div>
 
                     {/* Payment */}
                     <div>
-                        <h4 className="font-bold text-lg mb-4 leading-tight">Métodos de<br />Pagamento</h4>
+                        <h4 className="font-bold text-lg mb-4 leading-tight">{t('website.footer.paymentMethods')}</h4>
                         <div className="flex flex-wrap items-center gap-4 max-w-[360px]">
                             {/* M-Pesa */}
                             <div className="bg-[#e21a22] text-white italic font-black text-sm px-4 py-2.5 rounded-xl shadow-lg hover:shadow-xl transition-all select-none" title="M-Pesa">M-PESA</div>
@@ -78,7 +80,7 @@ export default function Footer() {
                             </div>
 
                             {/* Visa */}
-                            <div className="bg-white px-4 py-2.5 rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center select-none">
+                            <div className="bg-white dark:bg-card px-4 py-2.5 rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center select-none">
                                 <svg className="w-12 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M16.5 8.3h-1.8c-.5 0-.9.3-1.1.7l-3.2 7.7h2l.4-1h2.5l.2 1h1.8l-1.2-8.4h.4zm-1 5.9h-1.6l.8-2 1.2 5.2-.4-3.2zm-6.1-5.9H7.6L5.1 14.3l-.3-1.3C4.5 12 3.6 11.1 2.6 10.7l1.4 6h2L8.5 8.3h1.3l-.4 0zm-7.9 0H.1L0 8.5c0 .2.2.4.4.4h2L4.6 8.3h-2.1z" fill="transparent" />
                                     <path d="M16.5 8.12875H14.455L14.7358 11.0062L15.66 14.6725H17.8683L21.1442 8.12875H18.2717L16.485 13.065L16.1425 11.2375L15.6567 8.5725C15.54 8.2325 15.2283 8.12875 14.8875 8.12875H11.7758L11.7242 8.35625C11.7242 8.35625 13.4358 8.685 14.455 9.3875H16.5V8.12875ZM11.6667 8.12875H9.50742L8.14992 14.6725H10.3092L11.6667 8.12875ZM2.85842 8.12875C1.86175 8.12875 1.54342 8.875 1.54342 8.875L1.50342 9.04375L0.26425 14.2887H2.38508L3.43592 9.61375H4.44425L3.92425 11.7375H2.38508L1.50342 14.2887C1.50342 14.2887 0.25 14.2887 0.25 14.2887C0.25 14.5387 0.46175 14.6725 0.722583 14.6725H4.2125L4.8525 11.5837C4.8525 11.5837 5.79508 11.5837 6.43508 11.5837L6.68508 12.89L7.02258 14.6725H9.18175L7.82425 8.12875H2.85842V8.12875Z" fill="#1A1F71" />
@@ -86,7 +88,7 @@ export default function Footer() {
                             </div>
 
                             {/* Mastercard */}
-                            <div className="bg-white px-4 py-2.5 rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center select-none">
+                            <div className="bg-white dark:bg-card px-4 py-2.5 rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center select-none">
                                 <svg className="w-12 h-6" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <circle cx="16" cy="24" r="15" fill="#EB001B" />
                                     <circle cx="32" cy="24" r="15" fill="#F79E1B" />
@@ -99,7 +101,7 @@ export default function Footer() {
                 </div>
 
                 <div className="mt-12 pt-8 border-t border-white/20 text-xs opacity-70 text-center md:text-left">
-                    Copyright ZUMA. Todos direitos reservados
+                    {t('website.footer.copyright')}
                 </div>
             </div>
         </footer>

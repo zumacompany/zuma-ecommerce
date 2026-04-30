@@ -51,6 +51,7 @@ body {
 
 body {
   @apply bg-bg text-text antialiased;
+  font-family: "Inter", "Manrope", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 * {

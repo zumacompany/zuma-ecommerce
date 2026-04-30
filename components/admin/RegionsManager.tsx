@@ -1,269 +1,328 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Plus, Edit2, Trash2, X, Check, Globe } from "lucide-react"
+import { Plus, Edit2, Trash2, X, Check, Globe, ExternalLink } from "lucide-react"
 import ConfirmationModal from "./ConfirmationModal"
 import EmptyState from "./EmptyState"
+import CatalogFlowBar from "./CatalogFlowBar"
+import { useI18n } from "../../lib/i18n"
+import { btnPrimary, input, label } from "../ui/classes"
 
 type Region = {
-    id: string
-    name: string
-    code: string
-    created_at: string
+  id: string
+  name: string
+  code: string
+  created_at: string
 }
 
 export default function RegionsManager({ initialRegions }: { initialRegions: Region[] }) {
-    const router = useRouter()
-    const [regions, setRegions] = useState(initialRegions)
+  const router = useRouter()
+  const { t } = useI18n()
+  const [regions, setRegions] = useState(initialRegions)
 
-    // Create state
-    const [newName, setNewName] = useState("")
-    const [newCode, setNewCode] = useState("")
-    const [creating, setCreating] = useState(false)
+  const [newName, setNewName] = useState("")
+  const [newCode, setNewCode] = useState("")
+  const [creating, setCreating] = useState(false)
 
-    // Edit state
-    const [editingId, setEditingId] = useState<string | null>(null)
-    const [editName, setEditName] = useState("")
-    const [editCode, setEditCode] = useState("")
-    const [updating, setUpdating] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editName, setEditName] = useState("")
+  const [editCode, setEditCode] = useState("")
+  const [updating, setUpdating] = useState(false)
 
-    // Delete state
-    const [deleteId, setDeleteId] = useState<string | null>(null)
-    const [deleting, setDeleting] = useState(false)
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
-    async function handleCreate(e: React.FormEvent) {
-        e.preventDefault()
-        if (!newName.trim() || !newCode.trim()) return
+  async function handleCreate(e: React.FormEvent) {
+    e.preventDefault()
+    if (!newName.trim() || !newCode.trim()) return
 
-        setCreating(true)
-        try {
-            const res = await fetch('/api/admin/regions', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: newName.trim(), code: newCode.trim().toUpperCase() })
-            })
+    setCreating(true)
+    try {
+      const res = await fetch("/api/admin/regions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newName.trim(),
+          code: newCode.trim().toUpperCase(),
+        }),
+      })
 
-            const json = await res.json()
-            if (!res.ok) throw new Error(json.error || 'Failed to create')
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || "Failed")
 
-            // Optimistic update - add to local state
-            if (json.data) {
-                setRegions(prev => [...prev, json.data].sort((a, b) => a.name.localeCompare(b.name)))
-            }
+      if (json.data) {
+        setRegions((prev) =>
+          [...prev, json.data].sort((a, b) => a.name.localeCompare(b.name))
+        )
+      }
 
-            setNewName('')
-            setNewCode('')
-            router.refresh()
-        } catch (err: any) {
-            alert(`Failed to create region: ${err.message}`)
-        } finally {
-            setCreating(false)
-        }
+      setNewName("")
+      setNewCode("")
+      router.refresh()
+    } catch (err: any) {
+      alert(`${t("regions.messages.createError")}: ${err.message}`)
+    } finally {
+      setCreating(false)
     }
+  }
 
-    function startEdit(region: Region) {
-        setEditingId(region.id)
-        setEditName(region.name)
-        setEditCode(region.code)
+  function startEdit(region: Region) {
+    setEditingId(region.id)
+    setEditName(region.name)
+    setEditCode(region.code)
+  }
+
+  function cancelEdit() {
+    setEditingId(null)
+    setEditName("")
+    setEditCode("")
+  }
+
+  async function handleUpdate() {
+    if (!editingId || !editName.trim() || !editCode.trim()) return
+
+    setUpdating(true)
+    try {
+      const res = await fetch(`/api/admin/regions/${editingId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: editName.trim(),
+          code: editCode.trim().toUpperCase(),
+        }),
+      })
+
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || "Failed")
+
+      if (json.data) {
+        setRegions((prev) =>
+          prev
+            .map((r) => (r.id === editingId ? json.data : r))
+            .sort((a, b) => a.name.localeCompare(b.name))
+        )
+      }
+
+      cancelEdit()
+      router.refresh()
+    } catch (err: any) {
+      alert(`${t("regions.messages.updateError")}: ${err.message}`)
+    } finally {
+      setUpdating(false)
     }
+  }
 
-    function cancelEdit() {
-        setEditingId(null)
-        setEditName('')
-        setEditCode('')
+  async function handleDelete() {
+    if (!deleteId) return
+
+    setDeleting(true)
+    try {
+      const res = await fetch(`/api/admin/regions/${deleteId}`, {
+        method: "DELETE",
+      })
+
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || "Failed")
+
+      setRegions((prev) => prev.filter((r) => r.id !== deleteId))
+      setDeleteId(null)
+      router.refresh()
+    } catch (err: any) {
+      alert(`${t("regions.messages.deleteError")}: ${err.message}`)
+    } finally {
+      setDeleting(false)
     }
+  }
 
-    async function handleUpdate() {
-        if (!editingId || !editName.trim() || !editCode.trim()) return
+  const regionToDelete = regions.find((r) => r.id === deleteId)
 
-        setUpdating(true)
-        try {
-            const res = await fetch(`/api/admin/regions/${editingId}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: editName.trim(), code: editCode.trim().toUpperCase() })
-            })
+  return (
+    <div className="space-y-6">
+      <ConfirmationModal
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={handleDelete}
+        title={t("regions.delete.title")}
+        description={t("regions.delete.description", { name: regionToDelete?.name || "" })}
+        confirmText={t("regions.delete.confirm")}
+        isDestructive={true}
+        loading={deleting}
+      />
 
-            const json = await res.json()
-            if (!res.ok) throw new Error(json.error || 'Failed to update')
+      <CatalogFlowBar current="regions" />
 
-            // Optimistic update - update in local state
-            if (json.data) {
-                setRegions(prev => prev.map(r => r.id === editingId ? json.data : r).sort((a, b) => a.name.localeCompare(b.name)))
-            }
-
-            cancelEdit()
-            router.refresh()
-        } catch (err: any) {
-            alert(`Failed to update region: ${err.message}`)
-        } finally {
-            setUpdating(false)
-        }
-    }
-
-    async function handleDelete() {
-        if (!deleteId) return
-
-        setDeleting(true)
-        try {
-            const res = await fetch(`/api/admin/regions/${deleteId}`, {
-                method: 'DELETE'
-            })
-
-            const json = await res.json()
-            if (!res.ok) throw new Error(json.error || 'Failed to delete')
-
-            // Optimistic update - remove from local state
-            setRegions(prev => prev.filter(r => r.id !== deleteId))
-
-            setDeleteId(null)
-            router.refresh()
-        } catch (err: any) {
-            alert(`Failed to delete region: ${err.message}`)
-        } finally {
-            setDeleting(false)
-        }
-    }
-
-    const regionToDelete = regions.find(r => r.id === deleteId)
-
-    return (
-        <div className="space-y-6">
-            {/* Confirmation Modal */}
-            <ConfirmationModal
-                isOpen={!!deleteId}
-                onClose={() => setDeleteId(null)}
-                onConfirm={handleDelete}
-                title="Delete Region"
-                description={`Are you sure you want to delete "${regionToDelete?.name}"? This action cannot be undone and may affect existing offers.`}
-                confirmText="Delete Region"
-                isDestructive={true}
-                loading={deleting}
-            />
-
-            {/* Create Form */}
-            <div className="bg-card rounded-2xl border border-borderc p-6 shadow-sm">
-                <h2 className="text-lg font-bold mb-4">Create region</h2>
-                <form onSubmit={handleCreate} className="flex gap-3">
-                    <input
-                        type="text"
-                        placeholder="Name (e.g., United States)"
-                        value={newName}
-                        onChange={(e) => setNewName(e.target.value)}
-                        className="flex-1 px-4 py-2 border border-borderc rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        disabled={creating}
-                    />
-                    <input
-                        type="text"
-                        placeholder="Code (e.g., US)"
-                        value={newCode}
-                        onChange={(e) => setNewCode(e.target.value.toUpperCase())}
-                        className="w-32 px-4 py-2 border border-borderc rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
-                        disabled={creating}
-                        maxLength={3}
-                    />
-                    <button
-                        type="submit"
-                        disabled={creating || !newName.trim() || !newCode.trim()}
-                        className="px-6 py-2 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                    >
-                        <Plus className="w-4 h-4" />
-                        {creating ? 'Creating...' : 'Create'}
-                    </button>
-                </form>
-            </div>
-
-            {/* Regions List */}
-            <div className="bg-card rounded-2xl border border-borderc shadow-sm overflow-hidden">
-                <div className="px-6 py-4 border-b border-borderc bg-muted/30">
-                    <h2 className="text-lg font-bold">Regions</h2>
-                </div>
-
-                {regions.length === 0 ? (
-                    <div className="p-12">
-                        <EmptyState
-                            title="No regions yet"
-                            description="Create your first region to enable offers in different locations."
-                            icon={<Globe className="w-12 h-12 text-muted/30" />}
-                        />
-                    </div>
-                ) : (
-                    <div className="divide-y divide-borderc">
-                        {regions.map((region) => (
-                            <div key={region.id} className="px-6 py-4 hover:bg-muted/5 transition-colors">
-                                {editingId === region.id ? (
-                                    <div className="flex items-center gap-3">
-                                        <input
-                                            type="text"
-                                            value={editName}
-                                            onChange={(e) => setEditName(e.target.value)}
-                                            className="flex-1 px-3 py-1.5 border border-borderc rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            disabled={updating}
-                                            placeholder="Name"
-                                        />
-                                        <input
-                                            type="text"
-                                            value={editCode}
-                                            onChange={(e) => setEditCode(e.target.value.toUpperCase())}
-                                            className="w-24 px-3 py-1.5 border border-borderc rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase"
-                                            disabled={updating}
-                                            placeholder="CODE"
-                                            maxLength={3}
-                                        />
-                                        <div className="flex gap-2">
-                                            <button
-                                                onClick={handleUpdate}
-                                                disabled={updating || !editName.trim() || !editCode.trim()}
-                                                className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
-                                                title="Save"
-                                            >
-                                                <Check className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                                onClick={cancelEdit}
-                                                disabled={updating}
-                                                className="p-2 text-muted hover:bg-muted/20 rounded-lg transition-colors"
-                                                title="Cancel"
-                                            >
-                                                <X className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center">
-                                                <Globe className="w-5 h-5 text-blue-600" />
-                                            </div>
-                                            <div>
-                                                <div className="font-semibold text-foreground">{region.name}</div>
-                                                <div className="text-sm text-muted font-mono">{region.code}</div>
-                                            </div>
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <button
-                                                onClick={() => startEdit(region)}
-                                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                title="Edit"
-                                            >
-                                                <Edit2 className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                                onClick={() => setDeleteId(region.id)}
-                                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                title="Delete"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">
+            {t("nav.regions")}
+          </p>
+          <h1 className="text-2xl font-semibold text-foreground">{t("regions.title")}</h1>
+          <p className="mt-1 text-sm text-muted">{t("regions.subtitle")}</p>
         </div>
-    )
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
+        <form
+          onSubmit={handleCreate}
+          className="rounded-2xl border border-borderc bg-card p-5 shadow-card"
+        >
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">
+              {t("regions.newTitle")}
+            </p>
+            <h2 className="text-lg font-semibold text-foreground">
+              {t("regions.newSubtitle")}
+            </h2>
+          </div>
+          <div className="mt-5 space-y-4">
+            <div className="space-y-2">
+              <label className={label}>{t("regions.fields.name")}</label>
+              <input
+                type="text"
+                placeholder={t("regions.placeholders.name")}
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                className={input}
+                disabled={creating}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className={label}>{t("regions.fields.code")}</label>
+              <input
+                type="text"
+                placeholder={t("regions.placeholders.code")}
+                value={newCode}
+                onChange={(e) => setNewCode(e.target.value.toUpperCase())}
+                className={input}
+                disabled={creating}
+                maxLength={3}
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={creating || !newName.trim() || !newCode.trim()}
+              className={`${btnPrimary} gap-2`}
+            >
+              <Plus className="h-4 w-4" />
+              {creating ? t("common.processing") : t("common.create")}
+            </button>
+          </div>
+        </form>
+
+        <div className="rounded-2xl border border-borderc bg-card shadow-card">
+          <div className="flex items-center justify-between border-b border-borderc px-6 py-4">
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">
+                {t("regions.listTitle")}
+              </h2>
+              <p className="text-sm text-muted">{t("regions.listSubtitle")}</p>
+            </div>
+            <span className="rounded-full border border-borderc bg-muted/10 px-3 py-1 text-xs font-semibold text-muted">
+              {regions.length}
+            </span>
+          </div>
+
+          {regions.length === 0 ? (
+            <div className="p-8">
+              <EmptyState
+                title={t("regions.empty.title")}
+                description={t("regions.empty.subtitle")}
+                icon={<Globe className="h-12 w-12 text-muted/30" />}
+              />
+            </div>
+          ) : (
+            <div className="divide-y divide-borderc">
+              {regions.map((region) => (
+                <div
+                  key={region.id}
+                  className="flex flex-col gap-3 px-6 py-4 transition hover:bg-muted/5 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  {editingId === region.id ? (
+                    <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center">
+                      <input
+                        type="text"
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        className={input}
+                        disabled={updating}
+                        placeholder={t("regions.fields.name")}
+                      />
+                      <input
+                        type="text"
+                        value={editCode}
+                        onChange={(e) => setEditCode(e.target.value.toUpperCase())}
+                        className={input}
+                        disabled={updating}
+                        placeholder={t("regions.fields.code")}
+                        maxLength={3}
+                      />
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={handleUpdate}
+                          disabled={updating || !editName.trim() || !editCode.trim()}
+                          className="rounded-lg p-2 text-success-700 transition hover:bg-success-50 disabled:opacity-50"
+                          title={t("common.save")}
+                        >
+                          <Check className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={cancelEdit}
+                          disabled={updating}
+                          className="rounded-lg p-2 text-muted transition hover:bg-muted/20"
+                          title={t("common.cancel")}
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-zuma-50 text-zuma-600">
+                          <Globe className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <div className="font-semibold text-foreground">{region.name}</div>
+                          <div className="text-xs text-muted">{region.code}</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/admin/offers?region=${region.code}`}
+                          className="rounded-lg p-2 text-zuma-600 transition hover:bg-zuma-50"
+                          title={t("common.viewOffers")}
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => startEdit(region)}
+                          className="rounded-lg p-2 text-zuma-600 transition hover:bg-zuma-50"
+                          title={t("common.edit")}
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeleteId(region.id)}
+                          className="rounded-lg p-2 text-danger-500 transition hover:bg-danger-50"
+                          title={t("common.delete")}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
 }

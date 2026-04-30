@@ -1,10 +1,12 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Plus, Edit2, Trash2, X, Image as ImageIcon, ChevronDown, ChevronRight } from "lucide-react"
+import { Plus, Edit2, Trash2, X, Image as ImageIcon, ChevronDown, ChevronRight, ExternalLink } from "lucide-react"
 import ConfirmationModal from "./ConfirmationModal"
 import EmptyState from "./EmptyState"
+import { useI18n } from "../../lib/i18n"
 
 type Brand = {
     id: string
@@ -21,6 +23,7 @@ type Brand = {
 type Category = {
     id: string
     name: string
+    slug: string
 }
 
 export default function BrandsManager({
@@ -30,8 +33,13 @@ export default function BrandsManager({
     initialBrands: Brand[]
     categories: Category[]
 }) {
+    const { t } = useI18n()
     const router = useRouter()
     const [brands, setBrands] = useState(initialBrands)
+
+    useEffect(() => {
+        setBrands(initialBrands)
+    }, [initialBrands])
 
     // Collapsed categories state
     const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set())
@@ -117,7 +125,7 @@ export default function BrandsManager({
 
     async function handleCreate() {
         if (!formData.name || !formData.slug || !formData.category_id) {
-            alert('Please fill in all required fields')
+            alert(t('validation.required'))
             return
         }
 
@@ -135,13 +143,13 @@ export default function BrandsManager({
             })
 
             const json = await res.json()
-            if (!res.ok) throw new Error(json.error || 'Failed to create')
+            if (!res.ok) throw new Error(json.error || t('brands.createError'))
 
             resetForm()
             setShowCreateModal(false)
             router.refresh()
         } catch (err: any) {
-            alert(`Failed to create brand: ${err.message}`)
+            alert(`${t('brands.createError')}: ${err.message}`)
         } finally {
             setLoading(false)
         }
@@ -164,14 +172,14 @@ export default function BrandsManager({
             })
 
             const json = await res.json()
-            if (!res.ok) throw new Error(json.error || 'Failed to update')
+            if (!res.ok) throw new Error(json.error || t('brands.updateError'))
 
             resetForm()
             setShowEditModal(false)
             setEditingBrand(null)
             router.refresh()
         } catch (err: any) {
-            alert(`Failed to update brand: ${err.message}`)
+            alert(`${t('brands.updateError')}: ${err.message}`)
         } finally {
             setLoading(false)
         }
@@ -187,12 +195,12 @@ export default function BrandsManager({
             })
 
             const json = await res.json()
-            if (!res.ok) throw new Error(json.error || 'Failed to delete')
+            if (!res.ok) throw new Error(json.error || t('brands.deleteError'))
 
             setDeleteId(null)
             router.refresh()
         } catch (err: any) {
-            alert(`Failed to delete brand: ${err.message}`)
+            alert(`${t('brands.deleteError')}: ${err.message}`)
         } finally {
             setLoading(false)
         }
@@ -219,9 +227,9 @@ export default function BrandsManager({
                 isOpen={!!deleteId}
                 onClose={() => setDeleteId(null)}
                 onConfirm={handleDelete}
-                title="Delete Brand"
-                description={`Are you sure you want to delete "${brandToDelete?.name}"? This action cannot be undone.`}
-                confirmText="Delete Brand"
+                title={t('brands.deleteTitle')}
+                description={t('brands.deleteDescription', { name: brandToDelete?.name || '' })}
+                confirmText={t('brands.delete')}
                 isDestructive={true}
                 loading={loading}
             />
@@ -231,7 +239,7 @@ export default function BrandsManager({
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-card rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                         <div className="sticky top-0 bg-card border-b border-borderc px-6 py-4 flex items-center justify-between">
-                            <h2 className="text-xl font-bold">{showCreateModal ? 'Create Brand' : 'Edit Brand'}</h2>
+                            <h2 className="text-xl font-bold">{showCreateModal ? t('brands.newBrand') : t('brands.editBrand')}</h2>
                             <button
                                 onClick={() => {
                                     setShowCreateModal(false)
@@ -248,24 +256,24 @@ export default function BrandsManager({
                         <div className="p-6 space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-semibold mb-2">Name *</label>
+                                    <label className="block text-sm font-semibold mb-2">{t('brands.name')} *</label>
                                     <input
                                         type="text"
                                         value={formData.name}
                                         onChange={(e) => {
                                             setFormData({ ...formData, name: e.target.value, slug: slugify(e.target.value) })
                                         }}
-                                        className="w-full px-4 py-2 border border-borderc rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        className="w-full px-4 py-2 border border-borderc rounded-xl focus:outline-none focus:ring-2 focus:ring-zuma-500"
                                         placeholder="Apple"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-semibold mb-2">Slug *</label>
+                                    <label className="block text-sm font-semibold mb-2">{t('brands.slug')} *</label>
                                     <input
                                         type="text"
                                         value={formData.slug}
                                         onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                                        className="w-full px-4 py-2 border border-borderc rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        className="w-full px-4 py-2 border border-borderc rounded-xl focus:outline-none focus:ring-2 focus:ring-zuma-500"
                                         placeholder="apple"
                                     />
                                 </div>
@@ -273,35 +281,35 @@ export default function BrandsManager({
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-semibold mb-2">Category *</label>
+                                    <label className="block text-sm font-semibold mb-2">{t('brands.category')} *</label>
                                     <select
                                         value={formData.category_id}
                                         onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
-                                        className="w-full px-4 py-2 border border-borderc rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        className="w-full px-4 py-2 border border-borderc rounded-xl focus:outline-none focus:ring-2 focus:ring-zuma-500"
                                     >
-                                        <option value="">Select category</option>
+                                        <option value="">{t('brands.selectCategory')}</option>
                                         {categories.map(cat => (
                                             <option key={cat.id} value={cat.id}>{cat.name}</option>
                                         ))}
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-semibold mb-2">Status</label>
+                                    <label className="block text-sm font-semibold mb-2">{t('brands.status')}</label>
                                     <select
                                         value={formData.status}
                                         onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                                        className="w-full px-4 py-2 border border-borderc rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        className="w-full px-4 py-2 border border-borderc rounded-xl focus:outline-none focus:ring-2 focus:ring-zuma-500"
                                     >
-                                        <option value="active">Active</option>
-                                        <option value="inactive">Inactive</option>
+                                        <option value="active">{t('brands.active')}</option>
+                                        <option value="inactive">{t('brands.inactive')}</option>
                                     </select>
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-semibold mb-2">Logo</label>
-                                    <div className="border-2 border-dashed border-borderc rounded-xl p-4 text-center hover:border-blue-500 transition-colors">
+                                    <label className="block text-sm font-semibold mb-2">{t('brands.logo')}</label>
+                                    <div className="border-2 border-dashed border-borderc rounded-xl p-4 text-center hover:border-zuma-500 transition-colors">
                                         <input
                                             type="file"
                                             accept="image/*"
@@ -311,20 +319,20 @@ export default function BrandsManager({
                                         />
                                         <label htmlFor="logo-upload" className="cursor-pointer">
                                             <ImageIcon className="w-8 h-8 mx-auto mb-2 text-muted" />
-                                            <p className="text-sm text-muted">{logoFile ? logoFile.name : 'Click to upload'}</p>
+                                            <p className="text-sm text-muted">{logoFile ? logoFile.name : t('brands.clickToUpload')}</p>
                                         </label>
                                     </div>
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-sm font-semibold mb-2">Description (Markdown)</label>
+                                <label className="block text-sm font-semibold mb-2">{t('brands.description')} (Markdown)</label>
                                 <textarea
                                     value={formData.description_md}
                                     onChange={(e) => setFormData({ ...formData, description_md: e.target.value })}
-                                    className="w-full px-4 py-2 border border-borderc rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full px-4 py-2 border border-borderc rounded-xl focus:outline-none focus:ring-2 focus:ring-zuma-500"
                                     rows={4}
-                                    placeholder="Brand description in markdown format..."
+                                    placeholder={t('brands.descriptionPlaceholder')}
                                 />
                                 <p className="text-xs text-muted mt-1">{formData.description_md.length} characters</p>
                             </div>
@@ -341,14 +349,14 @@ export default function BrandsManager({
                                 className="px-4 py-2 border border-borderc rounded-xl font-semibold hover:bg-muted/20 transition-colors"
                                 disabled={loading}
                             >
-                                Cancel
+                                {t('brands.cancel')}
                             </button>
                             <button
                                 onClick={showCreateModal ? handleCreate : handleUpdate}
                                 disabled={loading || !formData.name || !formData.slug || !formData.category_id}
-                                className="px-6 py-2 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-6 py-2 bg-zuma-500 text-white rounded-xl font-semibold hover:bg-zuma-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {loading ? 'Saving...' : (showCreateModal ? 'Create Brand' : 'Update Brand')}
+                                {loading ? t('brands.saving') : (showCreateModal ? t('brands.create') : t('brands.save'))}
                             </button>
                         </div>
                     </div>
@@ -359,14 +367,14 @@ export default function BrandsManager({
             {/* Header */}
             <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-muted bg-muted/30 px-3 py-1 rounded-full border border-borderc">
-                    {brands.length} {brands.length === 1 ? 'Brand' : 'Brands'}
+                    {t('brands.totalCount', { count: brands.length })}
                 </span>
                 <button
                     onClick={() => setShowCreateModal(true)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2"
+                    className="px-4 py-2 bg-zuma-500 text-white rounded-xl font-semibold hover:bg-zuma-600 transition-colors flex items-center gap-2"
                 >
                     <Plus className="w-4 h-4" />
-                    Create Brand
+                    {t('brands.newBrand')}
                 </button>
             </div>
 
@@ -375,10 +383,10 @@ export default function BrandsManager({
                 brands.length === 0 ? (
                     <div className="bg-card rounded-2xl border border-borderc p-12">
                         <EmptyState
-                            title="No brands yet"
-                            description="Create your first brand to start organizing your products."
+                            title={t('brands.noBrands')}
+                            description={t('brands.noBrandsDescription')}
                             icon={<Plus className="w-12 h-12 text-muted/30" />}
-                            ctaLabel="Create Brand"
+                            ctaLabel={t('brands.newBrand')}
                             onClick={() => setShowCreateModal(true)}
                         />
                     </div>
@@ -386,16 +394,23 @@ export default function BrandsManager({
                     <div className="space-y-4">
                         {categories.map(category => {
                             const categoryBrands = brandsByCategory.get(category.id) || []
-                            if (categoryBrands.length === 0) return null
 
                             const isCollapsed = collapsedCategories.has(category.id)
+                            const isUncategorized = category.slug === "sem-categoria"
 
                             return (
-                                <div key={category.id} className="bg-card rounded-2xl border border-borderc shadow-sm overflow-hidden">
+                                <div
+                                    key={category.id}
+                                    className={`bg-card rounded-2xl border shadow-sm overflow-hidden ${isUncategorized ? "border-amber-200" : "border-borderc"
+                                        }`}
+                                >
                                     {/* Category Header */}
                                     <button
                                         onClick={() => toggleCategory(category.id)}
-                                        className="w-full px-6 py-4 bg-muted/30 border-b border-borderc flex items-center justify-between hover:bg-muted/40 transition-colors"
+                                        className={`w-full px-6 py-4 border-b flex items-center justify-between transition-colors ${isUncategorized
+                                            ? "bg-amber-50 border-amber-200 hover:bg-amber-100/60"
+                                            : "bg-muted/30 border-borderc hover:bg-muted/40"
+                                            }`}
                                     >
                                         <div className="flex items-center gap-3">
                                             {isCollapsed ? (
@@ -404,11 +419,23 @@ export default function BrandsManager({
                                                 <ChevronDown className="w-5 h-5 text-muted" />
                                             )}
                                             <h3 className="text-lg font-bold">{category.name}</h3>
+                                            {isUncategorized && (
+                                                <span className="rounded-full bg-amber-200/70 px-2 py-0.5 text-xs font-semibold text-amber-800">
+                                                    {t("brands.uncategorizedBadge")}
+                                                </span>
+                                            )}
                                             <span className="text-sm text-muted bg-muted/50 px-2 py-0.5 rounded-full">
                                                 {categoryBrands.length}
                                             </span>
                                         </div>
                                     </button>
+
+                                    {isUncategorized && !isCollapsed && (
+                                        <div className="border-b border-amber-200 bg-amber-50 px-6 py-3 text-sm text-amber-900">
+                                            <span className="font-semibold">{t("brands.uncategorizedTitle")}</span>{" "}
+                                            {t("brands.uncategorizedSubtitle")}
+                                        </div>
+                                    )}
 
                                     {/* Brands Table */}
                                     {!isCollapsed && (
@@ -416,54 +443,73 @@ export default function BrandsManager({
                                             <table className="w-full text-sm">
                                                 <thead className="bg-muted/20 border-b border-borderc">
                                                     <tr>
-                                                        <th className="px-6 py-3 text-left font-semibold">Logo</th>
-                                                        <th className="px-6 py-3 text-left font-semibold">Name</th>
-                                                        <th className="px-6 py-3 text-left font-semibold">Status</th>
-                                                        <th className="px-6 py-3 text-right font-semibold">Actions</th>
+                                                        <th className="px-6 py-3 text-left font-semibold">{t('brands.table.logo')}</th>
+                                                        <th className="px-6 py-3 text-left font-semibold">{t('brands.table.name')}</th>
+                                                        <th className="px-6 py-3 text-left font-semibold">{t('brands.table.status')}</th>
+                                                        <th className="px-6 py-3 text-right font-semibold">{t('brands.table.actions')}</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-borderc">
-                                                    {categoryBrands.map((brand) => (
-                                                        <tr key={brand.id} className="hover:bg-muted/5 transition-colors">
-                                                            <td className="px-6 py-4">
-                                                                {brand.logo_path ? (
-                                                                    <img src={brand.logo_path} alt={brand.name} className="h-12 w-12 object-contain rounded" />
-                                                                ) : (
-                                                                    <div className="h-12 w-12 bg-muted/20 rounded flex items-center justify-center">
-                                                                        <ImageIcon className="w-6 h-6 text-muted/40" />
-                                                                    </div>
-                                                                )}
-                                                            </td>
-                                                            <td className="px-6 py-4">
-                                                                <div className="font-semibold text-foreground">{brand.name}</div>
-                                                                <div className="text-xs text-muted">{brand.slug}</div>
-                                                            </td>
-                                                            <td className="px-6 py-4">
-                                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold uppercase ${brand.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
-                                                                    }`}>
-                                                                    {brand.status}
-                                                                </span>
-                                                            </td>
-                                                            <td className="px-6 py-4 text-right">
-                                                                <div className="flex items-center justify-end gap-2">
-                                                                    <button
-                                                                        onClick={() => openEditModal(brand)}
-                                                                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                                        title="Edit"
-                                                                    >
-                                                                        <Edit2 className="w-4 h-4" />
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => setDeleteId(brand.id)}
-                                                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                                        title="Delete"
-                                                                    >
-                                                                        <Trash2 className="w-4 h-4" />
-                                                                    </button>
-                                                                </div>
+                                                    {categoryBrands.length === 0 ? (
+                                                        <tr>
+                                                            <td colSpan={4} className="px-6 py-6 text-sm text-muted">
+                                                                {t("brands.emptyCategory")}
                                                             </td>
                                                         </tr>
-                                                    ))}
+                                                    ) : (
+                                                        categoryBrands.map((brand) => (
+                                                            <tr
+                                                                key={brand.id}
+                                                                className={`transition-colors hover:bg-muted/5 ${isUncategorized ? "bg-amber-50/30" : ""}`}
+                                                            >
+                                                                <td className="px-6 py-4">
+                                                                    {brand.logo_path ? (
+                                                                        <img src={brand.logo_path} alt={brand.name} className="h-12 w-12 object-contain rounded" />
+                                                                    ) : (
+                                                                        <div className="h-12 w-12 bg-muted/20 rounded flex items-center justify-center">
+                                                                            <ImageIcon className="w-6 h-6 text-muted/40" />
+                                                                        </div>
+                                                                    )}
+                                                                </td>
+                                                                <td className="px-6 py-4">
+                                                                    <div className="font-semibold text-foreground">{brand.name}</div>
+                                                                    <div className="text-xs text-muted">{brand.slug}</div>
+                                                                    <Link
+                                                                        href={`/admin/offers?brand=${brand.id}`}
+                                                                        className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-zuma-600 hover:text-zuma-700 transition-colors"
+                                                                        title={t("common.viewOffers")}
+                                                                    >
+                                                                        {t("common.viewOffers")}
+                                                                        <ExternalLink className="h-3 w-3" />
+                                                                    </Link>
+                                                                </td>
+                                                                <td className="px-6 py-4">
+                                                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold uppercase ${brand.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                                                                        }`}>
+                                                                        {t(`brands.${brand.status}`)}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="px-6 py-4 text-right">
+                                                                    <div className="flex items-center justify-end gap-2">
+                                                                        <button
+                                                                            onClick={() => openEditModal(brand)}
+                                                                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                                            title={t('common.edit')}
+                                                                        >
+                                                                            <Edit2 className="w-4 h-4" />
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => setDeleteId(brand.id)}
+                                                                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                                            title={t('common.delete')}
+                                                                        >
+                                                                            <Trash2 className="w-4 h-4" />
+                                                                        </button>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        ))
+                                                    )}
                                                 </tbody>
                                             </table>
                                         </div>

@@ -1,26 +1,18 @@
 import { NextResponse } from 'next/server'
-import { supabaseAdmin } from '../../../../lib/supabase/server'
+import { withRoute } from '@/src/server/http/route'
+import { requireAdmin } from '@/src/server/platform/auth/admin'
+import { getHomeContent, updateHomeContent } from '@/src/server/modules/content/home-content.service'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
-    try {
-        const { data, error } = await supabaseAdmin.from('home_content').select('*').eq('id', 1).maybeSingle()
-        if (error) throw error
-        return NextResponse.json({ data })
-    } catch (err: any) {
-        // If row doesn't exist (seed failed?), return empty or init
-        return NextResponse.json({ data: {} })
-    }
-}
+export const GET = withRoute(async ({ request }) => {
+  await requireAdmin(request)
+  const result = await getHomeContent()
+  return NextResponse.json(result)
+})
 
-export async function PATCH(req: Request) {
-    try {
-        const body = await req.json()
-        const { error } = await supabaseAdmin.from('home_content').upsert({ ...body, id: 1 })
-        if (error) throw error
-        return NextResponse.json({ success: true })
-    } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 })
-    }
-}
+export const PATCH = withRoute(async ({ request }) => {
+  await requireAdmin(request)
+  const result = await updateHomeContent(request)
+  return NextResponse.json(result)
+})

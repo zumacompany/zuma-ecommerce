@@ -1,14 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { useI18n } from "../../lib/i18n"
+import { ORDER_STATUSES, type OrderStatus } from "@/src/server/modules/orders/order-status"
+import { getOrderStatusBadgeClass, getOrderStatusLabel, normalizeOrderStatus } from "@/src/server/modules/orders/order-status.mapper"
 
-const STATUS_OPTIONS = [
-    { value: 'new', label: 'New', color: 'bg-blue-100 text-blue-700' },
-    { value: 'on_hold', label: 'On Hold', color: 'bg-amber-100 text-amber-700' },
-    { value: 'delivered', label: 'Delivered', color: 'bg-green-100 text-green-700' },
-    { value: 'canceled', label: 'Canceled', color: 'bg-red-100 text-red-700' }
-]
+const DEFAULT_STATUS: OrderStatus = 'new'
 
 export default function OrderStatusSelect({
     orderId,
@@ -18,24 +16,24 @@ export default function OrderStatusSelect({
     currentStatus: string
 }) {
     const router = useRouter()
+    const { t } = useI18n()
     const [loading, setLoading] = useState(false)
-    const [status, setStatus] = useState(currentStatus)
+    const [status, setStatus] = useState<OrderStatus>(normalizeOrderStatus(currentStatus) ?? DEFAULT_STATUS)
+    const [error, setError] = useState<string | null>(null)
 
-    // Find current color or default
-    const currentColor = STATUS_OPTIONS.find(o => o.value === status)?.color || 'bg-gray-100 text-gray-700'
+    useEffect(() => {
+        setStatus(normalizeOrderStatus(currentStatus) ?? DEFAULT_STATUS)
+    }, [currentStatus])
 
-    async function handleChange(newStatus: string) {
+    const currentColor = getOrderStatusBadgeClass(status)
+
+    async function handleChange(newStatus: OrderStatus) {
         if (newStatus === status) return
 
-        console.log('🔄 Attempting to update order status:', {
-            orderId,
-            currentStatus: status,
-            newStatus
-        })
-
+        const previousStatus = status
+        setError(null)
         setLoading(true)
         try {
-            // Optimistic update
             setStatus(newStatus)
 
             const res = await fetch(`/api/admin/orders/${orderId}/status`, {
@@ -47,19 +45,16 @@ export default function OrderStatusSelect({
             })
 
             const data = await res.json()
-            console.log('📡 API Response:', { status: res.status, data })
 
             if (!res.ok) {
                 throw new Error(data.error || 'Failed to update')
             }
 
-            console.log('✅ Status updated successfully')
             router.refresh()
         } catch (err: any) {
-            // Revert on error
             console.error('❌ Status update failed:', err)
-            setStatus(currentStatus)
-            alert(`Failed to update status: ${err.message}`)
+            setStatus(previousStatus)
+            setError(err?.message || 'Failed to update status')
         } finally {
             setLoading(false)
         }
@@ -69,8 +64,10 @@ export default function OrderStatusSelect({
         <div className="relative inline-block text-left">
             <select
                 value={status}
-                onChange={(e) => handleChange(e.target.value)}
+                onChange={(e) => handleChange((normalizeOrderStatus(e.target.value) ?? DEFAULT_STATUS) as OrderStatus)}
                 disabled={loading}
+                aria-label={t('orders.updateStatus')}
+                aria-invalid={error ? true : false}
                 className={`
           appearance-none
           block w-full pl-3 pr-8 py-1
@@ -80,9 +77,9 @@ export default function OrderStatusSelect({
           ${currentColor}
         `}
             >
-                {STATUS_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                        {opt.label}
+                {ORDER_STATUSES.map((option) => (
+                    <option key={option} value={option}>
+                        {getOrderStatusLabel(option, t)}
                     </option>
                 ))}
             </select>
@@ -98,6 +95,12 @@ export default function OrderStatusSelect({
                 <div className="absolute inset-0 bg-white/50 flex items-center justify-center">
                     <div className="w-3 h-3 border-2 border-zuma-500 border-t-transparent rounded-full animate-spin"></div>
                 </div>
+            )}
+
+            {error && (
+                <p className="mt-1 max-w-44 text-[11px] font-medium text-danger-500">
+                    {error}
+                </p>
             )}
         </div>
     )

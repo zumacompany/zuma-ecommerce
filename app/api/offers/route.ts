@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { supabaseAdmin } from '../../../lib/supabase/server'
+import { supabasePublic } from '../../../lib/supabase/public-server'
+import { apiError } from '../../../lib/api/response'
 
 export async function GET(req: Request) {
   try {
@@ -9,15 +10,21 @@ export async function GET(req: Request) {
 
     if (!brand || !region) return NextResponse.json({ data: [] })
 
-    const { data, error } = await supabaseAdmin.from('brands').select('id').eq('slug', brand).maybeSingle()
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    if (!data) return NextResponse.json({ data: [] })
+    // Single round-trip: join offers → brands and filter by brand slug, dropping
+    // the prior brand-lookup query (was N+1).
+    const { data: offers, error: offersErr } = await supabasePublic
+      .from('offers')
+      .select('id, region_code, denomination_value, denomination_currency, price, brands!inner(slug)')
+      .eq('brands.slug', brand)
+      .eq('region_code', region)
+      .eq('status', 'active')
+      .order('denomination_value')
+    if (offersErr) return apiError(offersErr.message)
 
-    const { data: offers, error: offersErr } = await supabaseAdmin.from('offers').select('id, region_code, denomination_value, denomination_currency, price').eq('brand_id', data.id).eq('region_code', region).eq('status', 'active').order('denomination_value')
-    if (offersErr) return NextResponse.json({ error: offersErr.message }, { status: 500 })
-
-    return NextResponse.json({ data: offers ?? [] })
+    // Strip the joined brand object from the response shape to keep clients unchanged.
+    const cleaned = (offers ?? []).map(({ brands, ...rest }: any) => rest)
+    return NextResponse.json({ data: cleaned })
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message ?? 'unknown' }, { status: 500 })
+    return apiError(err?.message ?? 'unknown')
   }
 }

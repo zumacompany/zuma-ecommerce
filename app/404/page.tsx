@@ -27,24 +27,23 @@ export default function Page() {
             </svg>
           </div>
 
-          <h1 className="mt-4 text-3xl font-bold">404 — Unauthorized</h1>
-          <p className="mt-3 text-sm text-muted">Whoa there! This area requires a secret handshake (or a session cookie).</p>
-          <p className="mt-4 text-sm">If you were trying to sneak in, the security guard is a penguin and he takes snacks only. 🍪🐧</p>
+          <h1 className="mt-4 text-3xl font-bold">Acesso Não Autorizado</h1>
+          <p className="mt-3 text-sm text-muted">Ops! Esta área requer autenticação.</p>
+          <p className="mt-4 text-sm">O nosso guarda de segurança é um pinguim e ele só aceita lanches. 🍪🐧</p>
 
           <div className="mt-6 flex justify-center gap-3">
-            <a href="/" className="px-4 py-2 rounded bg-zuma-500 text-white">Take me home</a>
-            <a href="/admin" className="px-4 py-2 rounded border border-borderc">Admin login</a>
+            <a href="/" className="px-4 py-2 rounded bg-zuma-500 text-white">Voltar ao Início</a>
           </div>
 
-          <p className="mt-6 text-xs text-muted">If this looks wrong, please <strong>poke</strong> the developer—gently.</p>
+          <p className="mt-6 text-xs text-muted">Se algo parecer errado, por favor, avise o desenvolvedor — com cuidado.</p>
         </div>
 
         {/* Print-friendly view (visible only when printing) */}
         <div className="hidden print:block text-left">
-          <h1 className="text-xl font-semibold">404 — Unauthorized</h1>
-          <p className="mt-2">This page requires authentication. If you require access, please contact the site administrator.</p>
-          <p className="mt-3">Suggested contact: <strong>admin@yourdomain.com</strong></p>
-          <p className="mt-3 text-xs text-muted">Note: This print-friendly page omits graphics and interactive elements.</p>
+          <h1 className="text-xl font-semibold">Acesso Não Autorizado</h1>
+          <p className="mt-2">Esta página requer autenticação. Se precisar de acesso, contacte o suporte.</p>
+          <p className="mt-3">Contacto sugerido: <strong>support@zuma.com</strong></p>
+          <p className="mt-3 text-xs text-muted">Nota: Esta página para impressão omite gráficos e elementos interativos.</p>
         </div>
       </div>
     </div>

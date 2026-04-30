@@ -1,30 +1,29 @@
-import '../styles/globals.css'
-import Header from '../components/Header'
-import Footer from '../components/Footer'
+import "../styles/globals.css";
+import ErrorBoundary from "../components/ErrorBoundary";
+import Providers from "../components/Providers";
 
 export const metadata = {
-  title: 'Zuma',
-  description: 'Gift Cards, Streaming e Crypto Vouchers'
-}
+  title: "Zuma",
+  description: "Gift Cards, Streaming e Crypto Vouchers",
+};
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+/**
+ * Root layout — minimal shell that applies to every route group.
+ * Public chrome lives in app/(public), customer chrome lives in
+ * app/(customer), and admin chrome lives in app/admin.
+ */
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="pt-BR">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-          rel="stylesheet"
-        />
-      </head>
       <body>
-        <Header />
-        <div className="flex-1">
-          {children}
-        </div>
-        <Footer />
+        <Providers>
+          <ErrorBoundary>{children}</ErrorBoundary>
+        </Providers>
       </body>
     </html>
-  )
+  );
 }

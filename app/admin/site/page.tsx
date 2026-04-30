@@ -1,13 +1,10 @@
-import SiteAdmin from '../../../components/admin/SiteAdmin'
+import SiteSettingsPageUI from '../../../components/admin/SiteSettingsPageUI'
 
 export default function AdminSitePage() {
   return (
-    <div>
-      <h1 className="text-2xl font-semibold">Site</h1>
-      <p className="mt-2 text-sm text-muted">Edit home content and site settings (WhatsApp number, etc).</p>
-
-      <div className="mt-6">
-        <SiteAdmin />
+    <div className="p-6">
+      <div className="max-w-5xl mx-auto">
+        <SiteSettingsPageUI />
       </div>
     </div>
   )

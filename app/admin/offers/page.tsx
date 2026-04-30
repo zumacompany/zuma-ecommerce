@@ -25,8 +25,6 @@ export default async function AdminOffersPage({
     .select('code, name')
     .order('name')
 
-  console.log('🔍 DEBUG - Brands:', brands)
-  console.log('🔍 DEBUG - Regions:', regions)
 
   // Fetch offers with filters
   let offersQuery = supabaseAdmin
@@ -40,8 +38,6 @@ export default async function AdminOffersPage({
 
   const { data: offersData, error: offersError } = await offersQuery
 
-  console.log('🔍 DEBUG - Offers Data:', offersData)
-  console.log('🔍 DEBUG - Filters:', { brandFilter, regionFilter, statusFilter })
 
   // Manually join with regions
   const offers = offersData?.map((offer: any) => ({
@@ -49,7 +45,6 @@ export default async function AdminOffersPage({
     region: regions?.find((r: any) => r.code === offer.region_code) || null
   })) || []
 
-  console.log('🔍 DEBUG - Offers with regions:', offers)
 
   if (offersError) {
     return (
@@ -64,22 +59,15 @@ export default async function AdminOffersPage({
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Ofertas</h1>
-        <p className="mt-1 text-sm text-muted">Gerencie ofertas associadas a marcas e regiões.</p>
-      </div>
-
-      <OffersManager
-        initialOffers={offers || []}
-        brands={brands || []}
-        regions={regions || []}
-        currentFilters={{
-          brand: brandFilter,
-          region: regionFilter,
-          status: statusFilter
-        }}
-      />
-    </div>
+    <OffersManager
+      initialOffers={offers || []}
+      brands={brands || []}
+      regions={regions || []}
+      currentFilters={{
+        brand: brandFilter,
+        region: regionFilter,
+        status: statusFilter
+      }}
+    />
   )
 }

@@ -1,23 +1,27 @@
 import React from 'react'
+import { useI18n } from '../../lib/i18n'
+import { getStatusColor, getStatusLabel } from '@/lib/orderStatus'
 
-type StatusType = 'active' | 'inactive' | 'pending' | 'delivered' | 'cancelled' | string
+type StatusType = 'active' | 'inactive' | string
 
 export default function StatusBadge({ status }: { status: StatusType }) {
-    const s = status.toLowerCase()
+    const { t } = useI18n()
 
-    let colorClass = 'bg-muted/20 text-muted'
+    if (status === 'active' || status === 'inactive') {
+        const colorClass = status === 'active'
+            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800'
+            : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800'
 
-    if (s === 'active' || s === 'delivered') {
-        colorClass = 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-    } else if (s === 'inactive' || s === 'cancelled') {
-        colorClass = 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-    } else if (s === 'pending') {
-        colorClass = 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+        return (
+            <span className={`inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium capitalize ${colorClass}`}>
+                {t(`orders.status.${status}`)}
+            </span>
+        )
     }
 
     return (
-        <span className={`px-2 py-1 rounded text-xs font-medium capitalize ${colorClass}`}>
-            {status}
+        <span className={`inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium ${getStatusColor(status)}`}>
+            {getStatusLabel(status, t)}
         </span>
     )
 }

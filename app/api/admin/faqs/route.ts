@@ -1,33 +1,18 @@
 import { NextResponse } from 'next/server'
-import { supabaseAdmin } from '../../../../lib/supabase/server'
+import { withRoute } from '@/src/server/http/route'
+import { requireAdmin } from '@/src/server/platform/auth/admin'
+import { listContentBlocks, upsertContentBlocks } from '@/src/server/modules/content/content-blocks.service'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
-    try {
-        const { data, error } = await supabaseAdmin.from('faqs').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: true })
-        if (error) throw error
-        return NextResponse.json({ data })
-    } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 })
-    }
-}
+export const GET = withRoute(async ({ request }) => {
+  await requireAdmin(request)
+  const result = await listContentBlocks('faqs')
+  return NextResponse.json(result)
+})
 
-export async function POST(req: Request) {
-    try {
-        const body = await req.json()
-
-        // Support batch upsert or single insert
-        if (Array.isArray(body)) {
-            const { error } = await supabaseAdmin.from('faqs').upsert(body, { onConflict: 'id' })
-            if (error) throw error
-        } else {
-            const { error } = await supabaseAdmin.from('faqs').insert(body)
-            if (error) throw error
-        }
-
-        return NextResponse.json({ success: true })
-    } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 })
-    }
-}
+export const POST = withRoute(async ({ request }) => {
+  await requireAdmin(request)
+  const result = await upsertContentBlocks(request, 'faqs')
+  return NextResponse.json(result)
+})

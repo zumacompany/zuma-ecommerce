@@ -1,23 +1,10 @@
 import { NextResponse } from 'next/server'
-import { supabaseAdmin } from '../../../../../lib/supabase/server'
+import { withRoute } from '@/src/server/http/route'
+import { requireAdmin } from '@/src/server/platform/auth/admin'
+import { bulkDeleteOrders } from '@/src/server/modules/orders/order-admin.service'
 
-export async function POST(req: Request) {
-    try {
-        const body = await req.json()
-        const { ids } = body
-
-        if (!ids || !Array.isArray(ids) || ids.length === 0) {
-            return NextResponse.json({ error: 'IDs array required' }, { status: 400 })
-        }
-
-        const { error } = await supabaseAdmin.from('orders').delete().in('id', ids)
-
-        if (error) {
-            return NextResponse.json({ error: error.message }, { status: 500 })
-        }
-
-        return NextResponse.json({ success: true })
-    } catch (err: any) {
-        return NextResponse.json({ error: err?.message ?? 'unknown' }, { status: 500 })
-    }
-}
+export const POST = withRoute(async ({ request }) => {
+  await requireAdmin(request)
+  const result = await bulkDeleteOrders(request)
+  return NextResponse.json(result)
+})

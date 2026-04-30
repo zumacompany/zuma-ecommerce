@@ -1,16 +1,52 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { supabase } from "../../../lib/supabase/browser"
 import { Lock, Mail, Loader2, AlertCircle } from "lucide-react"
 
 export default function AdminLoginPage() {
     const router = useRouter()
+    const [checkingBootstrap, setCheckingBootstrap] = useState(true)
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+
+    useEffect(() => {
+        let active = true
+
+        async function checkBootstrap() {
+            try {
+                const res = await fetch("/api/admin/bootstrap-status", { cache: "no-store" })
+                const data = await res.json()
+
+                if (!res.ok) {
+                    throw new Error(data.error || "Failed to load admin status")
+                }
+
+                if (active && !data.hasAdmins) {
+                    router.replace("/admin/signup")
+                    return
+                }
+            } catch (err: any) {
+                if (active) {
+                    setError(err.message || "Failed to load admin status")
+                }
+            } finally {
+                if (active) {
+                    setCheckingBootstrap(false)
+                }
+            }
+        }
+
+        checkBootstrap()
+
+        return () => {
+            active = false
+        }
+    }, [router])
 
     async function handleLogin(e: React.FormEvent) {
         e.preventDefault()
@@ -18,17 +54,32 @@ export default function AdminLoginPage() {
         setError(null)
 
         try {
-            const { error: authError } = await supabase.auth.signInWithPassword({
+            const { data, error: authError } = await supabase.auth.signInWithPassword({
                 email,
                 password,
             })
 
             if (authError) throw authError
 
+            // Clear login error first
+            setError(null)
+
+            // Check if user has admin role after successful login
+            const user = data?.user
+            const role = user?.app_metadata?.role ?? user?.user_metadata?.role
+            const roles = user?.app_metadata?.roles ?? user?.user_metadata?.roles
+            const isAdmin = role === 'admin' || (Array.isArray(roles) && roles.includes('admin'))
+
+            if (!isAdmin) {
+                // Sign out immediately if not admin
+                await supabase.auth.signOut()
+                throw new Error("Sua conta não possui permissões de administrador.")
+            }
+
             router.push("/admin")
             router.refresh()
         } catch (err: any) {
-            setError(err.message || "Failed to login")
+            setError(err.message || "Falha ao entrar")
             setLoading(false)
         }
     }
@@ -46,6 +97,11 @@ export default function AdminLoginPage() {
                     </p>
                 </div>
 
+                {checkingBootstrap ? (
+                    <div className="flex justify-center py-6">
+                        <Loader2 className="h-6 w-6 animate-spin text-zuma-500" />
+                    </div>
+                ) : (
                 <form className="mt-8 space-y-6" onSubmit={handleLogin}>
                     {error && (
                         <div className="p-3 rounded-lg bg-red-50 border border-red-100 flex items-center gap-3 text-red-600 text-sm animate-in fade-in slide-in-from-top-1">
@@ -113,7 +169,15 @@ export default function AdminLoginPage() {
                             )}
                         </button>
                     </div>
+
+                    <div className="text-center text-sm text-muted">
+                        Need an admin account?{" "}
+                        <Link href="/admin/signup" className="font-semibold text-zuma-500 hover:text-zuma-600">
+                            Create one
+                        </Link>
+                    </div>
                 </form>
+                )}
             </div>
         </div>
     )

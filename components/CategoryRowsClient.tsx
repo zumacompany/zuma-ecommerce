@@ -1,7 +1,7 @@
 "use client";
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { useI18n } from "../lib/i18n";
 
 type Category = {
     id: string;
@@ -17,39 +17,23 @@ type Brand = {
     category_id: string;
 }
 
-export default function CategoryRowsClient() {
-    const [loading, setLoading] = useState(true);
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [brands, setBrands] = useState<Brand[]>([]);
+type Props = {
+    data: {
+        categories: Category[];
+        brands: Brand[];
+    } | null;
+}
 
-    useEffect(() => {
-        Promise.all([
-            fetch('/api/categories').then(r => r.json()),
-            fetch('/api/brands').then(r => r.json())
-        ]).then(([catData, brandData]) => {
-            if (catData.data) setCategories(catData.data);
-            if (brandData.data) setBrands(brandData.data);
-        }).finally(() => setLoading(false));
-    }, []);
-
-    if (loading) return (
-        <div className="py-8 space-y-8 container max-w-[1200px] px-4">
-            {[1, 2].map(i => (
-                <div key={i} className="space-y-4">
-                    <div className="h-6 w-32 bg-muted/10 rounded animate-pulse" />
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {[1, 2, 3, 4].map(j => <div key={j} className="h-24 bg-muted/10 rounded-xl animate-pulse" />)}
-                    </div>
-                </div>
-            ))}
-        </div>
-    );
+export default function CategoryRowsClient({ data }: Props) {
+    const { t } = useI18n();
+    const categories = data?.categories ?? [];
+    const brands = data?.brands ?? [];
 
     const visibleCategories = categories.filter(cat =>
-        brands.some(b => b.category_id === cat.id)
+        brands.some(b => b.category_id === cat.id) && cat.slug !== 'sem-categoria'
     );
 
-    if (!loading && visibleCategories.length === 0) {
+    if (visibleCategories.length === 0) {
         return null;
     }
 
@@ -69,7 +53,7 @@ export default function CategoryRowsClient() {
                                         href={`/c/${cat.slug}`}
                                         className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-primary transition-colors group"
                                     >
-                                        View all
+                                        {t('website.viewAll')}
                                         <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                                     </Link>
                                 </div>
@@ -79,7 +63,7 @@ export default function CategoryRowsClient() {
                                         <Link
                                             key={brand.id}
                                             href={`/b/${brand.slug}`}
-                                            className="group relative flex flex-col bg-muted/20 hover:bg-white border border-transparent hover:border-borderc rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+                                            className="group relative flex flex-col bg-muted/20 hover:bg-card/50 border border-transparent hover:border-borderc rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
                                         >
                                             {/* Card Image Area */}
                                             <div className="aspect-[4/3] flex items-center justify-center p-4 relative z-10">
@@ -104,7 +88,7 @@ export default function CategoryRowsClient() {
                                             </div>
 
                                             {/* Gradient Background on Hover */}
-                                            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                                         </Link>
                                     ))}
                                 </div>
@@ -116,4 +100,3 @@ export default function CategoryRowsClient() {
         </div>
     )
 }
-

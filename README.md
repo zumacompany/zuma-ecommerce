@@ -1,85 +1,231 @@
-# zuma
+# Zuma - Gift Cards Marketplace
+
 Se tornar a maior plataforma de marketplace digital. Permitir pessoas comprarem gift cards e acessar o melhor do entretenimento digital.
 
 ---
 
-## Etapa 1 — Infra & Base (Rápido)
+## Environment Variables
 
-Abaixo estão os passos mínimos para colocar o projeto em funcionamento localmente e conectar ao Supabase.
+Create a `.env.local` file in the root directory with the following variables:
 
-### Requisitos
+```env
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_URL=your_supabase_url
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+
+# Optional: Supabase Storage URL
+SUPABASE_STORAGE_URL=your_supabase_storage_url
+```
+
+> **Important**: Never commit your `.env.local` file or share the `SUPABASE_SERVICE_ROLE_KEY` publicly.
+
+---
+
+## Requisitos
+
 - Node 18+
 - npm ou yarn
 - Conta e projeto no Supabase (https://app.supabase.io)
 - Supabase CLI (opcional) — `npm i -g supabase`
 
+---
+
+## Instalação e Configuração
+
 ### 1) Instalar dependências
 
+```bash
 npm install
+```
 
-### 2) Variáveis de ambiente
-Copie `.env.example` para `.env.local` e preencha:
-- NEXT_PUBLIC_SUPABASE_URL
-- NEXT_PUBLIC_SUPABASE_ANON_KEY
-- SUPABASE_URL
-- SUPABASE_SERVICE_ROLE_KEY
-- (opcional) SUPABASE_STORAGE_URL
+### 2) Aplicar schema SQL no Supabase
 
-> **Importante**: não compartilhe `SUPABASE_SERVICE_ROLE_KEY` publicamente.
+#### **📋 Database Schema Documentation**
 
-### 3) Rodar em desenvolvimento
+The Zuma application uses a comprehensive PostgreSQL database schema. We provide multiple schema files:
 
-npm run dev
+| File | Purpose | When to Use |
+|------|---------|-------------|
+| **`supabase/MASTER_SCHEMA.sql`** | ✅ **Production-ready master schema** | Use this for new deployments |
+| `supabase/SCHEMA_DOCUMENTATION.md` | Complete documentation | Read this first to understand the structure |
+| `supabase/schema.sql` | Legacy schema | Deprecated - use MASTER_SCHEMA.sql |
 
-### 4) Aplicar schema SQL no Supabase
+**Key Features:**
+- ✅ 25 tables covering all application needs
+- ✅ Automated stock synchronization
+- ✅ Customer statistics auto-update
+- ✅ Performance indexes
+- ✅ All QA fixes implemented
+
+#### **Recommended Setup (Fresh Database):**
+
+**A) Com Supabase CLI (recomendado):**
+
+```bash
+supabase link --project-ref your-project-ref
+supabase db reset  # This will apply MASTER_SCHEMA.sql automatically
+```
 
 Arquivo: `supabase/schema.sql`
 
-A) Com Supabase CLI (recomendado):
-1. `supabase login`
-2. `supabase db connect` (abre psql)
-3. Execute: `\i supabase/schema.sql`
+**A) Com Supabase CLI (recomendado):**
 
-B) Com psql e connection string:
-`psql <CONNECTION_STRING> -f supabase/schema.sql`
+```bash
+supabase login
+supabase db connect  # abre psql
+\i supabase/schema.sql
+```
 
-### 5) Criar bucket de storage
+**B) Com psql e connection string:**
+
+```bash
+psql <CONNECTION_STRING> -f supabase/schema.sql
+```
+
+### 3) Aplicar Migrações
+
+Execute as migrações na ordem:
+
+```bash
+psql <CONNECTION_STRING> -f supabase/migrations/20240101000001_add_digital_inventory.sql
+psql <CONNECTION_STRING> -f supabase/migrations/20240102000000_add_analytics_indexes.sql
+psql <CONNECTION_STRING> -f supabase/migrations/20240103000000_add_customer_fields.sql
+```
+
+### 4) Criar bucket de storage
+
 Nome recomendado: `public-assets` (público)
 
-Com CLI:
+**Com CLI:**
 
+```bash
 supabase storage create-bucket public-assets --public
+```
 
-### 6) Testar upload (Admin)
-Acesse `/admin/upload` no dev e faça upload de imagens para `public-assets`.
+### 5) Configurar variáveis de ambiente
 
----
+Copie o exemplo acima e preencha com suas credenciais do Supabase.
 
-## API (Etapa 2 — Orders & Handoff)
+### 6) Rodar em desenvolvimento
 
-Endpoints server-side:
+```bash
+npm run dev
+```
 
-POST /api/orders
-- Body JSON (ex):
-  {
-    "customer_name": "Fulano",
-    "customer_email": "fulano@email.com",
-    "customer_whatsapp": "+258XXXXXXXXX",
-    "payment_method_id": "<uuid>",
-    "items": [{"offer_id": "<uuid>", "qty": 1, "unit_price": 10.00, "currency": "MZN"}],
-    "currency": "MZN",
-    "session_id": "optional-session-id"
-  }
-
-- Cria `orders` + `order_items` atomically via RPC `create_order`.
-- Retorna: { "orderNumber": "ZM-000001" }
-
-POST /api/orders/[orderNumber]/handoff
-- Marca o pedido `status = on_hold`, `handoff_clicked_at = now()` e grava evento `whatsapp_clicked`.
-- Retorno: { "ok": true }
+Acesse http://localhost:3000
 
 ---
 
-Se quiser, eu implemento o frontend do checkout que chama `/api/orders` e redireciona para `/order/{orderNumber}/success`.
+## Estrutura do Projeto
 
-Se quiser, eu posso continuar e implementar as rotas core (brand pages, checkout) e as APIs (orders/handoff). Diga qual passo quer que eu faça a seguir.
+```
+zuma/
+├── app/               # Next.js App Router
+│   ├── admin/        # Admin dashboard pages
+│   ├── api/          # API routes
+│   └── ...           # Public pages (home, checkout, etc)
+├── components/       # React components
+│   ├── admin/       # Admin-specific components
+│   └── ...          # Shared components
+├── lib/             # Utilities and configurations
+│   ├── supabase/   # Supabase client setup
+│   └── config.ts   # App configuration
+├── supabase/        # Database schema and migrations
+│   ├── schema.sql
+│   └── migrations/
+└── styles/          # Global styles
+```
+
+---
+
+## API Endpoints
+
+### Public API
+
+- `POST /api/orders` - Create a new order
+- `POST /api/analytics` - Track analytics events
+- `GET /api/categories` - Get all categories
+- `GET /api/brands` - Get all brands
+- `GET /api/offers` - Get available offers
+- `GET /api/site-content` - Get site configuration
+
+### Admin API
+
+Protected by authentication middleware. Requires admin role.
+
+- `GET/POST/PATCH/DELETE /api/admin/categories` - Manage categories
+- `GET/POST/PATCH/DELETE /api/admin/brands` - Manage brands
+- `GET/POST/PATCH/DELETE /api/admin/offers` - Manage offers
+- `GET/POST /api/admin/orders` - Manage orders
+- `POST /api/admin/orders/[id]/status` - Update order status
+- `GET /api/admin/analytics` - Get analytics data
+- `GET/POST/PATCH/DELETE /api/admin/customers` - Manage customers
+- And more...
+
+---
+
+## Deployment
+
+### Build for Production
+
+```bash
+npm run build
+npm start
+```
+
+### Vercel Deployment (Recommended)
+
+1. Push your code to GitHub
+2. Import project in Vercel
+3. Add environment variables
+4. Deploy
+
+---
+
+## Testing
+
+Run the backend checks:
+
+```bash
+npm run check
+```
+
+Useful individual commands:
+
+```bash
+npm run typecheck
+npm run test:unit
+```
+
+Architecture notes live in `docs/BACKEND_ARCHITECTURE.md`.
+
+---
+
+## Security Notes
+
+1. **Admin Access**: Only users with `admin` role in Supabase auth metadata can access admin routes
+2. **Service Role Key**: Never expose `SUPABASE_SERVICE_ROLE_KEY` in client-side code
+3. **Row Level Security**: Ensure RLS is enabled on all Supabase tables
+4. **Environment Variables**: Keep `.env.local` out of version control
+
+---
+
+## Features
+
+- ✅ Gift card marketplace
+- ✅ Multi-region support
+- ✅ Category and brand management
+- ✅ Order management system
+- ✅ Customer relationship tracking
+- ✅ Analytics and reporting
+- ✅ WhatsApp integration for order communication
+- ✅ Digital code inventory management
+- ✅ Admin dashboard with real-time stats
+
+---
+
+## Support
+
+For issues or questions, please create an issue in the repository.

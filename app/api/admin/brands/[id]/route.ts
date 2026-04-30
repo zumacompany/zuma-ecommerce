@@ -1,35 +1,16 @@
 import { NextResponse } from 'next/server'
-import { supabaseAdmin } from '../../../../../lib/supabase/server'
+import { withRoute } from '@/src/server/http/route'
+import { requireAdmin } from '@/src/server/platform/auth/admin'
+import { deleteBrand, updateBrand } from '@/src/server/modules/catalog/brand.service'
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
-  try {
-    const body = await req.json()
-    const { name, slug, category_id, logo_path, description_md, status } = body || {}
-    if (!name && !slug && !category_id && !logo_path && !description_md && !status) return NextResponse.json({ error: 'nothing to update' }, { status: 400 })
+export const PATCH = withRoute(async ({ request, params }) => {
+  await requireAdmin(request)
+  const result = await updateBrand(request, params.id)
+  return NextResponse.json(result)
+})
 
-    const updates: any = {}
-    if (name) updates.name = name
-    if (slug) updates.slug = slug
-    if (category_id) updates.category_id = category_id
-    if (logo_path !== undefined) updates.logo_path = logo_path
-    if (description_md !== undefined) updates.description_md = description_md
-    if (status) updates.status = status
-
-    const { data, error } = await supabaseAdmin.from('brands').update(updates).eq('id', params.id).select('id, name, slug, status, category:categories(id, name), logo_path').maybeSingle()
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-
-    return NextResponse.json({ data })
-  } catch (err: any) {
-    return NextResponse.json({ error: err?.message ?? 'unknown' }, { status: 500 })
-  }
-}
-
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
-  try {
-    const { error } = await supabaseAdmin.from('brands').delete().eq('id', params.id)
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    return NextResponse.json({ data: { id: params.id } })
-  } catch (err: any) {
-    return NextResponse.json({ error: err?.message ?? 'unknown' }, { status: 500 })
-  }
-}
+export const DELETE = withRoute(async ({ request, params }) => {
+  await requireAdmin(request)
+  const result = await deleteBrand(request, params.id)
+  return NextResponse.json(result)
+})

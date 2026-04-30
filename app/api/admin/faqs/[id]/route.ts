@@ -1,23 +1,16 @@
 import { NextResponse } from 'next/server'
-import { supabaseAdmin } from '../../../../../lib/supabase/server'
+import { withRoute } from '@/src/server/http/route'
+import { requireAdmin } from '@/src/server/platform/auth/admin'
+import { deleteContentBlock, updateContentBlock } from '@/src/server/modules/content/content-blocks.service'
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
-    try {
-        const body = await req.json()
-        const { error } = await supabaseAdmin.from('faqs').update(body).eq('id', params.id)
-        if (error) throw error
-        return NextResponse.json({ success: true })
-    } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 })
-    }
-}
+export const PATCH = withRoute(async ({ request, params }) => {
+  await requireAdmin(request)
+  const result = await updateContentBlock(request, 'faqs', params.id)
+  return NextResponse.json(result)
+})
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
-    try {
-        const { error } = await supabaseAdmin.from('faqs').delete().eq('id', params.id)
-        if (error) throw error
-        return NextResponse.json({ success: true })
-    } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 })
-    }
-}
+export const DELETE = withRoute(async ({ request, params }) => {
+  await requireAdmin(request)
+  const result = await deleteContentBlock('faqs', params.id)
+  return NextResponse.json(result)
+})

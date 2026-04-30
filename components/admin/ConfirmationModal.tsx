@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { AlertTriangle, X } from "lucide-react"
+import { useI18n } from "../../lib/i18n"
 
 interface ConfirmationModalProps {
     isOpen: boolean
@@ -21,11 +22,14 @@ export default function ConfirmationModal({
     onConfirm,
     title,
     description,
-    confirmText = "Delete",
-    cancelText = "Cancel",
+    confirmText,
+    cancelText,
     isDestructive = true,
     loading = false,
 }: ConfirmationModalProps) {
+    const { t } = useI18n()
+    const resolvedConfirm = confirmText ?? t('admin.common.delete')
+    const resolvedCancel = cancelText ?? t('admin.common.cancel')
     const [show, setShow] = useState(isOpen)
 
     useEffect(() => {
@@ -68,7 +72,7 @@ export default function ConfirmationModal({
                         onClick={onConfirm}
                         disabled={loading}
                     >
-                        {loading ? 'Processing...' : confirmText}
+                        {loading ? t('common.processing') : resolvedConfirm}
                     </button>
                     <button
                         type="button"
@@ -76,7 +80,7 @@ export default function ConfirmationModal({
                         onClick={onClose}
                         disabled={loading}
                     >
-                        {cancelText}
+                        {resolvedCancel}
                     </button>
                 </div>
             </div>

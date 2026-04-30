@@ -10,14 +10,16 @@ type HomeContent = {
   featured_brands_title?: string | null;
   trust_points_title?: string | null;
   faq_title?: string | null;
-  whatsapp_number?: string | null;
 }
 
 type TrustPoint = { id: string; title: string; subtitle?: string; sort_order: number };
 type Faq = { id: string; question: string; answer: string; sort_order: number };
 type Brand = { id: string; name: string; slug: string };
 
+import { useI18n } from "../../lib/i18n";
+
 export default function SiteAdmin() {
+  const { t } = useI18n();
   const [loading, setLoading] = useState(true);
 
   // Data States
@@ -26,6 +28,7 @@ export default function SiteAdmin() {
   const [faqs, setFaqs] = useState<Faq[]>([]);
   const [featuredSlugs, setFeaturedSlugs] = useState<string[]>([]);
   const [allBrands, setAllBrands] = useState<Brand[]>([]);
+  const [whatsappNumber, setWhatsappNumber] = useState('');
 
   // UI States
   const [activeTab, setActiveTab] = useState<'home' | 'brands' | 'trust' | 'faqs'>('home');
@@ -43,35 +46,63 @@ export default function SiteAdmin() {
     setTimeout(() => setMessage(null), 3000);
   }
 
-  useEffect(() => {
-    Promise.all([
-      fetch('/api/admin/home').then(r => r.json()),
-      fetch('/api/admin/trust-points').then(r => r.json()),
-      fetch('/api/admin/faqs').then(r => r.json()),
-      fetch('/api/admin/home-featured-brands').then(r => r.json()),
-      fetch('/api/admin/brands').then(r => r.json())
-    ]).then(([homeRes, trustRes, faqRes, featRes, brandsRes]) => {
-      setHome(homeRes.data || {});
-      setTrustPoints(trustRes.data || []);
-      setFaqs(faqRes.data || []);
-      setFeaturedSlugs(featRes.data || []);
-      setAllBrands(brandsRes.data || []);
+  async function loadSiteAdminData() {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/site', { cache: 'no-store' });
+      const payload = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        throw new Error(payload?.error || t('site.messages.loadError'));
+      }
+
+      const data = payload?.data ?? {};
+      setHome(data.home || {});
+      setTrustPoints(data.trust_points || []);
+      setFaqs(data.faqs || []);
+      setFeaturedSlugs(data.featured_brand_slugs || []);
+      setAllBrands(data.brands || []);
+      setWhatsappNumber(data.settings?.whatsapp_number || '');
+    } catch (err) {
+      console.error('Error loading site admin data:', err);
+      showMessage(err instanceof Error ? err.message : t('site.messages.loadError'), 'error');
+    } finally {
       setLoading(false);
-    });
+    }
+  }
+
+  useEffect(() => {
+    void loadSiteAdminData();
   }, []);
 
   async function saveHomeSettings() {
     setSavingHome(true);
     try {
-      const res = await fetch('/api/admin/home', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(home)
-      });
-      if (!res.ok) throw new Error();
-      showMessage('General settings saved successfully!');
+      const [homeRes, settingsRes] = await Promise.allSettled([
+        fetch('/api/admin/home', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(home)
+        }),
+        fetch('/api/admin/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key: 'whatsapp_number', value: whatsappNumber })
+        })
+      ])
+
+      const failures: string[] = []
+      if (homeRes.status === 'rejected' || !homeRes.value.ok) failures.push('home')
+      if (settingsRes.status === 'rejected' || !settingsRes.value.ok) failures.push('whatsapp')
+
+      if (failures.length > 0) {
+        throw new Error(failures.join(', '))
+      }
+
+      showMessage(t('site.messages.saveSuccess'));
     } catch (err) {
-      showMessage('Failed to save general settings', 'error');
+      console.error('saveHomeSettings failed:', err);
+      showMessage(t('site.messages.saveError'), 'error');
     } finally {
       setSavingHome(false);
     }
@@ -92,9 +123,9 @@ export default function SiteAdmin() {
         body: JSON.stringify({ slugs: featuredSlugs })
       });
       if (!res.ok) throw new Error();
-      showMessage('Featured brands selection saved!');
+      showMessage(t('site.messages.saveSuccess'));
     } catch (err) {
-      showMessage('Failed to save featured brands', 'error');
+      showMessage(t('site.messages.saveError'), 'error');
     } finally {
       setSavingBrands(false);
     }
@@ -117,7 +148,7 @@ export default function SiteAdmin() {
     }
   }
   async function deleteTrustPoint(id: string) {
-    if (!confirm('Delete this trust point?')) return;
+    if (!confirm(t('site.messages.deleteConfirm'))) return;
     await fetch(`/api/admin/trust-points/${id}`, { method: 'DELETE' });
     setTrustPoints(prev => prev.filter(p => p.id !== id));
   }
@@ -134,9 +165,9 @@ export default function SiteAdmin() {
         body: JSON.stringify(trustPoints)
       });
       if (!res.ok) throw new Error();
-      showMessage('Trust points saved successfully!');
+      showMessage(t('site.messages.saveSuccess'));
     } catch (err) {
-      showMessage('Failed to save trust points', 'error');
+      showMessage(t('site.messages.saveError'), 'error');
     } finally {
       setSavingTrust(false);
     }
@@ -158,7 +189,7 @@ export default function SiteAdmin() {
     }
   }
   async function deleteFaq(id: string) {
-    if (!confirm('Delete this FAQ?')) return;
+    if (!confirm(t('site.messages.deleteConfirm'))) return;
     await fetch(`/api/admin/faqs/${id}`, { method: 'DELETE' });
     setFaqs(prev => prev.filter(f => f.id !== id));
   }
@@ -175,9 +206,9 @@ export default function SiteAdmin() {
         body: JSON.stringify(faqs)
       });
       if (!res.ok) throw new Error();
-      showMessage('FAQs saved successfully!');
+      showMessage(t('site.messages.saveSuccess'));
     } catch (err) {
-      showMessage('Failed to save FAQs', 'error');
+      showMessage(t('site.messages.saveError'), 'error');
     } finally {
       setSavingFaqs(false);
     }
@@ -201,21 +232,49 @@ export default function SiteAdmin() {
         body: JSON.stringify({ hero_banner_image: data.publicUrl })
       });
     } catch (err) {
-      alert('Upload failed');
+      showMessage(t('site.messages.uploadFailed'), 'error');
     } finally {
       setUploadingHero(false);
     }
   }
 
-  if (loading) return <div className="p-8 text-center text-muted">Loading Builder...</div>;
+  if (loading) return <div className="p-8 text-center text-muted">{t('common.loading')}</div>;
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4 border-b border-borderc pb-4">
-        <button onClick={() => setActiveTab('home')} className={`px-4 py-2 rounded-lg font-medium transition-colors ${activeTab === 'home' ? 'bg-zuma-100 text-zuma-700' : 'hover:bg-muted/50'}`}>Home Settings</button>
-        <button onClick={() => setActiveTab('brands')} className={`px-4 py-2 rounded-lg font-medium transition-colors ${activeTab === 'brands' ? 'bg-zuma-100 text-zuma-700' : 'hover:bg-muted/50'}`}>Featured Brands</button>
-        <button onClick={() => setActiveTab('trust')} className={`px-4 py-2 rounded-lg font-medium transition-colors ${activeTab === 'trust' ? 'bg-zuma-100 text-zuma-700' : 'hover:bg-muted/50'}`}>Trust Points</button>
-        <button onClick={() => setActiveTab('faqs')} className={`px-4 py-2 rounded-lg font-medium transition-colors ${activeTab === 'faqs' ? 'bg-zuma-100 text-zuma-700' : 'hover:bg-muted/50'}`}>FAQs</button>
+      <div className="flex flex-wrap gap-2 rounded-2xl border border-borderc bg-card p-2">
+        <button
+          onClick={() => setActiveTab('home')}
+          className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${activeTab === 'home'
+            ? 'bg-zuma-500 text-white shadow-sm'
+            : 'text-muted hover:bg-muted/20 hover:text-foreground'}`}
+        >
+          {t('site.tabs.home')}
+        </button>
+        <button
+          onClick={() => setActiveTab('brands')}
+          className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${activeTab === 'brands'
+            ? 'bg-zuma-500 text-white shadow-sm'
+            : 'text-muted hover:bg-muted/20 hover:text-foreground'}`}
+        >
+          {t('site.tabs.brands')}
+        </button>
+        <button
+          onClick={() => setActiveTab('trust')}
+          className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${activeTab === 'trust'
+            ? 'bg-zuma-500 text-white shadow-sm'
+            : 'text-muted hover:bg-muted/20 hover:text-foreground'}`}
+        >
+          {t('site.tabs.trust')}
+        </button>
+        <button
+          onClick={() => setActiveTab('faqs')}
+          className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${activeTab === 'faqs'
+            ? 'bg-zuma-500 text-white shadow-sm'
+            : 'text-muted hover:bg-muted/20 hover:text-foreground'}`}
+        >
+          {t('site.tabs.faqs')}
+        </button>
       </div>
 
       {message && (
@@ -228,26 +287,26 @@ export default function SiteAdmin() {
 
       {activeTab === 'home' && (
         <div className="bg-card rounded-2xl border border-borderc p-6 space-y-6 animate-in fade-in">
-          <h3 className="text-lg font-bold">General Settings</h3>
+          <h3 className="text-lg font-bold">{t('site.home.title')}</h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold mb-2">Hero Title</label>
+                <label className="block text-sm font-semibold mb-2">{t('site.home.heroTitle')}</label>
                 <input className={input} value={home.hero_title || ''} onChange={e => setHome({ ...home, hero_title: e.target.value })} />
               </div>
               <div>
-                <label className="block text-sm font-semibold mb-2">Hero Subtitle</label>
+                <label className="block text-sm font-semibold mb-2">{t('site.home.heroSubtitle')}</label>
                 <input className={input} value={home.hero_subtitle || ''} onChange={e => setHome({ ...home, hero_subtitle: e.target.value })} />
               </div>
               <div>
-                <label className="block text-sm font-semibold mb-2">WhatsApp Number (Global)</label>
-                <input className={input} placeholder="+258..." value={home.whatsapp_number || ''} onChange={e => setHome({ ...home, whatsapp_number: e.target.value })} />
+                <label className="block text-sm font-semibold mb-2">{t('site.home.whatsappGlobal')}</label>
+                <input className={input} placeholder="+258..." value={whatsappNumber} onChange={e => setWhatsappNumber(e.target.value)} />
               </div>
             </div>
 
             <div className="space-y-4">
-              <label className="block text-sm font-semibold">Hero Banner Image</label>
+              <label className="block text-sm font-semibold">{t('site.home.bannerImage')}</label>
               {home.hero_banner_image ? (
                 <div className="relative group">
                   <img src={home.hero_banner_image} className="w-full h-48 object-cover rounded-lg border border-borderc" />
@@ -262,25 +321,25 @@ export default function SiteAdmin() {
                 <div className="h-48 border-2 border-dashed border-borderc rounded-lg flex flex-col items-center justify-center text-muted hover:border-zuma-500 hover:text-zuma-600 transition-colors cursor-pointer relative">
                   <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => e.target.files?.[0] && handleHeroUpload(e.target.files[0])} />
                   {uploadingHero ? <Loader2 className="w-8 h-8 animate-spin" /> : <ImageIcon className="w-8 h-8 mb-2" />}
-                  <span>Click to upload banner</span>
+                  <span>{t('site.home.uploadBanner')}</span>
                 </div>
               )}
             </div>
           </div>
 
           <div className="space-y-4 pt-6 border-t border-borderc">
-            <h4 className="font-semibold text-muted text-sm uppercase">Section Titles</h4>
+            <h4 className="font-semibold text-muted text-sm uppercase">{t('site.home.sectionTitles')}</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="text-xs font-semibold text-muted">Featured Brands Title</label>
+                <label className="text-xs font-semibold text-muted">{t('site.home.brandsTitle')}</label>
                 <input className={input} value={home.featured_brands_title || ''} onChange={e => setHome({ ...home, featured_brands_title: e.target.value })} />
               </div>
               <div>
-                <label className="text-xs font-semibold text-muted">Trust Points Title</label>
+                <label className="text-xs font-semibold text-muted">{t('site.home.trustTitle')}</label>
                 <input className={input} value={home.trust_points_title || ''} onChange={e => setHome({ ...home, trust_points_title: e.target.value })} />
               </div>
               <div>
-                <label className="text-xs font-semibold text-muted">FAQ Title</label>
+                <label className="text-xs font-semibold text-muted">{t('site.home.faqTitle')}</label>
                 <input className={input} value={home.faq_title || ''} onChange={e => setHome({ ...home, faq_title: e.target.value })} />
               </div>
             </div>
@@ -289,7 +348,7 @@ export default function SiteAdmin() {
           <div className="flex justify-end pt-4">
             <button onClick={saveHomeSettings} disabled={savingHome} className={`${btnPrimary} flex items-center gap-2`}>
               {savingHome ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              Save Settings
+              {t('common.save')}
             </button>
           </div>
         </div>
@@ -297,8 +356,8 @@ export default function SiteAdmin() {
 
       {activeTab === 'brands' && (
         <div className="bg-card rounded-2xl border border-borderc p-6 animate-in fade-in">
-          <h3 className="text-lg font-bold mb-4">Featured Brands Selection</h3>
-          <p className="text-sm text-muted mb-6">Select which brands appear on the homepage. They will be displayed in the order selected (future feature: drag sort).</p>
+          <h3 className="text-lg font-bold mb-4">{t('site.brands.title')}</h3>
+          <p className="text-sm text-muted mb-6">{t('site.brands.description')}</p>
 
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
             {allBrands.map(brand => {
@@ -315,7 +374,7 @@ export default function SiteAdmin() {
                            `}
                 >
                   <div className="font-semibold">{brand.name}</div>
-                  {isSelected && <div className="text-xs mt-1 font-bold text-zuma-600">SELECTED</div>}
+                  {isSelected && <div className="text-xs mt-1 font-bold text-zuma-600">{t('site.brands.selected')}</div>}
                 </div>
               )
             })}
@@ -324,7 +383,7 @@ export default function SiteAdmin() {
           <div className="flex justify-end mt-8 pt-6 border-t border-borderc">
             <button onClick={saveFeaturedBrands} disabled={savingBrands} className={`${btnPrimary} flex items-center gap-2 px-8`}>
               {savingBrands ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              Save Selection & Order
+              {t('site.brands.saveButton')}
             </button>
           </div>
         </div>
@@ -334,11 +393,11 @@ export default function SiteAdmin() {
         <div className="space-y-6 animate-in fade-in">
           {/* CREATE FORM */}
           <div className="bg-card rounded-2xl border border-borderc p-6">
-            <h4 className="text-sm font-bold uppercase text-muted mb-4">Add New Trust Point</h4>
+            <h4 className="text-sm font-bold uppercase text-muted mb-4">{t('site.trust.addNew')}</h4>
             <div className="flex gap-3">
-              <input className={`${input} flex-1`} placeholder="Title (e.g. Instant Delivery)" value={newTP.title} onChange={e => setNewTP({ ...newTP, title: e.target.value })} />
-              <input className={`${input} flex-1`} placeholder="Subtitle (e.g. Code via WhatsApp)" value={newTP.subtitle} onChange={e => setNewTP({ ...newTP, subtitle: e.target.value })} />
-              <button onClick={createTrustPoint} disabled={!newTP.title} className={btnPrimary}>Add</button>
+              <input className={`${input} flex-1`} placeholder={t('site.trust.placeholderTitle')} value={newTP.title} onChange={e => setNewTP({ ...newTP, title: e.target.value })} />
+              <input className={`${input} flex-1`} placeholder={t('site.trust.placeholderSubtitle')} value={newTP.subtitle} onChange={e => setNewTP({ ...newTP, subtitle: e.target.value })} />
+              <button onClick={createTrustPoint} disabled={!newTP.title} className={btnPrimary}>{t('common.add')}</button>
             </div>
           </div>
 
@@ -362,13 +421,13 @@ export default function SiteAdmin() {
                 <button onClick={() => deleteTrustPoint(tp.id)} className="text-muted hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
               </div>
             ))}
-            {trustPoints.length === 0 && <div className="p-8 text-center text-muted">No trust points added.</div>}
+            {trustPoints.length === 0 && <div className="p-8 text-center text-muted">{t('site.trust.noItems')}</div>}
           </div>
 
           <div className="flex justify-end pt-4">
             <button onClick={saveTrustPoints} disabled={savingTrust} className={`${btnPrimary} flex items-center gap-2`}>
               {savingTrust ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              Save Trust Points
+              {t('site.trust.saveButton')}
             </button>
           </div>
         </div>
@@ -378,12 +437,12 @@ export default function SiteAdmin() {
         <div className="space-y-6 animate-in fade-in">
           {/* CREATE FORM */}
           <div className="bg-card rounded-2xl border border-borderc p-6">
-            <h4 className="text-sm font-bold uppercase text-muted mb-4">Add New FAQ</h4>
+            <h4 className="text-sm font-bold uppercase text-muted mb-4">{t('site.faqs.addNew')}</h4>
             <div className="space-y-3">
-              <input className={input} placeholder="Question" value={newFaq.question} onChange={e => setNewFaq({ ...newFaq, question: e.target.value })} />
-              <textarea className={`${input} min-h-[80px]`} placeholder="Answer" value={newFaq.answer} onChange={e => setNewFaq({ ...newFaq, answer: e.target.value })} />
+              <input className={input} placeholder={t('site.faqs.question')} value={newFaq.question} onChange={e => setNewFaq({ ...newFaq, question: e.target.value })} />
+              <textarea className={`${input} min-h-[80px]`} placeholder={t('site.faqs.answer')} value={newFaq.answer} onChange={e => setNewFaq({ ...newFaq, answer: e.target.value })} />
               <div className="flex justify-end">
-                <button onClick={createFaq} disabled={!newFaq.question} className={btnPrimary}>Add FAQ</button>
+                <button onClick={createFaq} disabled={!newFaq.question} className={btnPrimary}>{t('site.faqs.addNew')}</button>
               </div>
             </div>
           </div>
@@ -409,13 +468,13 @@ export default function SiteAdmin() {
                 </div>
               </div>
             ))}
-            {faqs.length === 0 && <div className="p-8 text-center text-muted bg-card rounded-2xl border border-borderc">No FAQs added.</div>}
+            {faqs.length === 0 && <div className="p-8 text-center text-muted bg-card rounded-2xl border border-borderc">{t('site.faqs.noItems')}</div>}
           </div>
 
           <div className="flex justify-end pt-4">
             <button onClick={saveFaqs} disabled={savingFaqs} className={`${btnPrimary} flex items-center gap-2`}>
               {savingFaqs ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              Save FAQs
+              {t('site.faqs.saveButton')}
             </button>
           </div>
         </div>

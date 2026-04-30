@@ -1,17 +1,19 @@
 import { supabaseAdmin } from '../../../lib/supabase/server'
-import BrandsManager from '../../../components/admin/BrandsManager'
+import BrandsPageUI from '../../../components/admin/BrandsPageUI'
+
+export const dynamic = 'force-dynamic'
 
 export default async function AdminBrandsPage() {
   // Fetch brands with category info
   const { data: brands, error: brandsError } = await supabaseAdmin
     .from('brands')
-    .select('*, category:categories(id, name)')
+    .select('*, category:categories(id, name, slug)')
     .order('created_at', { ascending: false })
 
   // Fetch categories for the form
   const { data: categories } = await supabaseAdmin
     .from('categories')
-    .select('id, name')
+    .select('id, name, slug')
     .order('name')
 
   if (brandsError) {
@@ -33,16 +35,9 @@ export default async function AdminBrandsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Marcas</h1>
-        <p className="mt-1 text-sm text-muted">Gerencie as marcas disponíveis na loja.</p>
-      </div>
-
-      <BrandsManager
-        initialBrands={brands || []}
-        categories={categories || []}
-      />
-    </div>
+    <BrandsPageUI
+      initialBrands={brands || []}
+      categories={categories || []}
+    />
   )
 }

@@ -1,14 +1,19 @@
 "use client";
+import React from "react";
 import { useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
 
 type Theme = "light" | "dark";
+type ThemeToggleProps = {
+  compact?: boolean;
+};
+
 function applyTheme(theme: Theme) {
   const root = document.documentElement;
   theme === "dark" ? root.classList.add("dark") : root.classList.remove("dark");
 }
 
-export default function ThemeToggle() {
+export default function ThemeToggle({ compact = false }: ThemeToggleProps) {
   const [theme, setTheme] = useState<Theme>("light");
   const [mounted, setMounted] = useState(false);
 
@@ -34,13 +39,15 @@ export default function ThemeToggle() {
     <button
       type="button"
       onClick={toggle}
-      className="flex items-center justify-center min-w-[44px] min-h-[44px] w-11 h-11 rounded-md hover:bg-muted/10 text-muted transition-colors"
+      className={`flex items-center justify-center rounded-md text-muted transition-colors hover:bg-muted/10 ${
+        compact ? "min-h-9 min-w-9 h-9 w-9" : "min-h-[44px] min-w-[44px] h-11 w-11"
+      }`}
       aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
     >
       {theme === "dark" ? (
-        <Sun className="w-5 h-5" />
+        <Sun className={compact ? "h-4 w-4" : "h-5 w-5"} />
       ) : (
-        <Moon className="w-5 h-5" />
+        <Moon className={compact ? "h-4 w-4" : "h-5 w-5"} />
       )}
     </button>
   );

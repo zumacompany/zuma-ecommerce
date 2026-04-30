@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { useI18n } from "../lib/i18n";
 
 type Brand = {
     id: string;
@@ -18,6 +20,7 @@ type Offer = {
 }
 
 export default function FeaturedProductsClient() {
+    const { t, locale } = useI18n();
     const [offers, setOffers] = useState<Offer[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -47,8 +50,8 @@ export default function FeaturedProductsClient() {
         <section className="mt-8 mb-12">
             <div className="container max-w-[1200px] px-4">
                 <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-bold tracking-tight">Featured Products</h2>
-                    <Link href="/browse" className="text-sm font-medium text-primary hover:underline">View all</Link>
+                    <h2 className="text-xl font-bold tracking-tight">{t('website.featuredProducts')}</h2>
+                    <Link href="/browse" className="text-sm font-medium text-primary hover:underline">{t('website.viewAll')}</Link>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
@@ -65,7 +68,7 @@ export default function FeaturedProductsClient() {
                                 </div>
 
                                 {offer.brands.logo_path ? (
-                                    <img src={offer.brands.logo_path} alt={offer.brands.name} className="max-w-full max-h-full object-contain drop-shadow-sm" />
+                                    <Image src={offer.brands.logo_path} alt={`${offer.brands.name} logo`} fill sizes="(max-width: 768px) 50vw, 200px" className="object-contain drop-shadow-sm" />
                                 ) : (
                                     <span className="text-2xl font-bold text-muted/30">{offer.brands.name.charAt(0)}</span>
                                 )}
@@ -74,10 +77,10 @@ export default function FeaturedProductsClient() {
                             <div className="p-3 flex flex-col gap-1">
                                 <h3 className="text-xs font-medium text-muted-foreground truncate">{offer.brands.name}</h3>
                                 <div className="text-sm font-bold text-foreground">
-                                    {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'MZN' }).format(offer.price)}
+                                    {new Intl.NumberFormat(locale === 'pt' ? 'pt-MZ' : 'en-US', { style: 'currency', currency: 'MZN' }).format(offer.price)}
                                 </div>
                                 <button className="mt-2 w-full py-1.5 bg-primary text-primary-fg text-xs font-bold rounded hover:bg-primary/90 transition-colors">
-                                    Buy
+                                    {t('checkout.buy')}
                                 </button>
                             </div>
                         </Link>

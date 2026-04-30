@@ -1,8 +1,9 @@
 "use client"
 import Link from 'next/link'
+import { useI18n } from '../../lib/i18n'
 
 export default function EmptyState({
-  title = 'No data',
+  title,
   description,
   ctaLabel,
   ctaHref,
@@ -16,10 +17,12 @@ export default function EmptyState({
   onClick?: () => void
   icon?: React.ReactNode
 }) {
+  const { t } = useI18n()
+  const resolvedTitle = title ?? t('admin.common.noResults')
   return (
     <div className="rounded-2xl border border-dashed border-borderc p-12 text-center flex flex-col items-center justify-center">
       {icon && <div className="mb-4 text-muted/40">{icon}</div>}
-      <h3 className="text-xl font-bold text-foreground">{title}</h3>
+      <h3 className="text-xl font-bold text-foreground">{resolvedTitle}</h3>
       {description && <p className="mt-3 text-sm text-muted max-w-xs mx-auto leading-relaxed">{description}</p>}
       {(ctaLabel && (ctaHref || onClick)) && (
         <div className="mt-8">

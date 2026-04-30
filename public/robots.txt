@@ -1,0 +1,18 @@
+User-agent: *
+Allow: /
+
+# Sitemaps
+Sitemap: https://yourdomain.com/sitemap.xml
+
+# Disallow admin routes
+User-agent: *
+Disallow: /admin/
+Disallow: /api/admin/
+
+# Allow all other routes
+User-agent: *
+Allow: /
+Allow: /b/
+Allow: /c/
+Allow: /browse
+Allow: /checkout

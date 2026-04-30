@@ -1,74 +1,13 @@
 "use client";
-import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { useI18n } from "../lib/i18n";
 
 type Brand = { id: string; name: string; slug: string; logo_path?: string | null };
 type Data = { brands: Brand[]; title?: string | null };
 
-export default function FeaturedBrandsClient() {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<Data | null>(null);
-
-  useEffect(() => {
-    let mounted = true;
-    setLoading(true);
-    fetch('/api/featured-brands')
-      .then((r) => r.json())
-      .then((json) => {
-        if (!mounted) return;
-        if (json.error) {
-          setError(json.error)
-          setData(null)
-        } else {
-          setData({
-            brands: Array.isArray(json.data) ? json.data : [],
-            title: json.title
-          })
-          setError(null)
-        }
-      })
-      .catch((err) => {
-        if (!mounted) return;
-        setError(err?.message ?? 'unknown')
-        setData(null)
-      })
-      .finally(() => {
-        if (!mounted) return;
-        setLoading(false)
-      })
-
-    return () => { mounted = false }
-  }, [])
-
-  if (loading) {
-    return (
-      <section className="mt-8">
-        <div className="container max-w-[1200px]">
-          <h2 className="text-lg font-semibold">Featured brands</h2>
-          <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="rounded-xl bg-card p-6 border border-borderc">Loading...</div>
-            <div className="rounded-xl bg-card p-6 border border-borderc">Loading...</div>
-            <div className="rounded-xl bg-card p-6 border border-borderc">Loading...</div>
-          </div>
-        </div>
-      </section>
-    )
-  }
-
-  if (error) {
-    return (
-      <section className="mt-8">
-        <div className="container max-w-[1200px]">
-          <h2 className="text-lg font-semibold">Featured brands</h2>
-          <div className="mt-4 rounded-xl bg-card p-6 border border-borderc">
-            <h3 className="text-lg font-semibold">Error</h3>
-            <p className="mt-2 text-sm text-muted">{error}</p>
-          </div>
-        </div>
-      </section>
-    )
-  }
+export default function FeaturedBrandsClient({ data }: { data: Data | null }) {
+  const { t } = useI18n();
 
   if (!data || !data.brands || data.brands.length === 0) {
     return null;
@@ -78,9 +17,9 @@ export default function FeaturedBrandsClient() {
     <section className="mt-8 mb-12">
       <div className="container max-w-[1200px] px-4">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold tracking-tight text-foreground">{data.title || "Featured Brands"}</h2>
-          <Link href="/brands" className="text-sm text-primary font-medium hover:underline flex items-center gap-1">
-            View all
+          <h2 className="text-xl font-bold tracking-tight text-foreground">{data.title || t('website.featuredBrands')}</h2>
+          <Link href="/browse" className="text-sm text-primary font-medium hover:underline flex items-center gap-1">
+            {t('website.viewAll')}
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
           </Link>
         </div>
@@ -95,10 +34,12 @@ export default function FeaturedBrandsClient() {
             >
               <div className="h-16 w-full flex items-center justify-center relative">
                 {b.logo_path ? (
-                  <img
+                  <Image
                     src={b.logo_path}
-                    alt={b.name}
-                    className="max-h-full max-w-full object-contain filter grayscale group-hover:grayscale-0 transition-all duration-300"
+                    alt={`${b.name} logo`}
+                    fill
+                    sizes="(max-width: 768px) 160px, 200px"
+                    className="object-contain filter grayscale group-hover:grayscale-0 transition-all duration-300"
                   />
                 ) : (
                   <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xl">

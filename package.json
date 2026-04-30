@@ -7,11 +7,16 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "vitest"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:unit": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm run test:unit"
   },
   "dependencies": {
+    "@supabase/auth-js": "^2.103.0",
     "@supabase/ssr": "^0.8.0",
-    "@supabase/supabase-js": "^2.0.0",
+    "@supabase/supabase-js": "^2.103.0",
     "@tailwindcss/cli": "^4.1.18",
     "autoprefixer": "^10.0.0",
     "lucide-react": "^0.562.0",
@@ -20,7 +25,8 @@
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "tailwindcss": "^3.4.19",
-    "use-debounce": "^10.0.6"
+    "use-debounce": "^10.0.6",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.0.0",

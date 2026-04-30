@@ -1,36 +1,18 @@
 import { NextResponse } from 'next/server'
-import { supabaseAdmin } from '../../../../lib/supabase/server'
+import { withRoute } from '@/src/server/http/route'
+import { requireAdmin } from '@/src/server/platform/auth/admin'
+import { createCustomer, listCustomers } from '@/src/server/modules/customers/customer.service'
 
-export async function POST(req: Request) {
-    try {
-        const body = await req.json()
-        const { name, email, whatsapp_e164, country, province, status } = body || {}
+export const dynamic = 'force-dynamic'
 
-        if (!name || !email || !whatsapp_e164) {
-            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
-        }
+export const GET = withRoute(async ({ request }) => {
+  await requireAdmin(request)
+  const result = await listCustomers(request)
+  return NextResponse.json(result)
+})
 
-        const { data, error } = await supabaseAdmin
-            .from('customers')
-            .insert({
-                name,
-                email,
-                whatsapp_e164,
-                country: country || 'Mozambique',
-                province: province || '',
-                status: (status || 'active').toLowerCase()
-            })
-            .select()
-            .maybeSingle()
-
-        if (error) throw error
-
-        return NextResponse.json({ data })
-    } catch (err: any) {
-        console.error('Create customer error:', err)
-        return NextResponse.json(
-            { error: err.message || 'Failed to create customer' },
-            { status: 500 }
-        )
-    }
-}
+export const POST = withRoute(async ({ request }) => {
+  await requireAdmin(request)
+  const result = await createCustomer(request)
+  return NextResponse.json(result)
+})

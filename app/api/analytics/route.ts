@@ -1,24 +1,37 @@
 import { NextResponse } from 'next/server'
-import { supabaseAdmin } from '../../../lib/supabase/server'
+import { supabasePublic } from '../../../lib/supabase/public-server'
+import { AnalyticsEventSchema } from '../../../lib/validation/order'
+import { apiBadRequest, apiError } from '../../../lib/api/response'
+import { analyticsLimiter, getClientIp } from '../../../lib/api/rate-limit'
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json()
-    const { session_id = null, event_name, path = null, metadata = null } = body
-    if (!event_name) return NextResponse.json({ error: 'event_name is required' }, { status: 400 })
-
-    const payload = {
-      session_id: session_id ?? null,
-      event_name,
-      path,
-      metadata: metadata ?? null
+    // Rate limit analytics events
+    const ip = getClientIp(req)
+    if (!analyticsLimiter.check(ip)) {
+      return NextResponse.json({ ok: true }) // Silently drop — don't reveal rate-limiting to analytics
     }
 
-    const { error } = await supabaseAdmin.from('analytics_events').insert([payload])
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    const body = await req.json()
+    const parsed = AnalyticsEventSchema.safeParse(body)
+
+    if (!parsed.success) {
+      return apiBadRequest('Invalid event data')
+    }
+
+    const { event_name, path, metadata, session_id } = parsed.data
+
+    const { error } = await supabasePublic.from('analytics_events').insert([{
+      session_id: session_id ?? null,
+      event_name,
+      path: path ?? null,
+      metadata: metadata ?? null,
+    }])
+
+    if (error) return apiError(error.message)
 
     return NextResponse.json({ ok: true })
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message ?? 'unknown' }, { status: 500 })
+    return apiError(err?.message ?? 'unknown')
   }
 }

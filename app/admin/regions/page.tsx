@@ -1,6 +1,8 @@
 import { supabaseAdmin } from '../../../lib/supabase/server'
 import RegionsManager from '../../../components/admin/RegionsManager'
 
+export const dynamic = 'force-dynamic'
+
 export default async function AdminRegionsPage() {
     const { data: regions, error } = await supabaseAdmin
         .from('regions')
@@ -15,24 +17,17 @@ export default async function AdminRegionsPage() {
                 </div>
                 <h3 className="text-lg font-bold text-foreground">Erro ao carregar regiões</h3>
                 <p className="mt-2 text-sm text-muted max-w-xs">{error.message}</p>
-                <button
-                    onClick={() => window.location.reload()}
-                    className="mt-6 px-4 py-2 bg-zuma-500 text-white rounded-xl text-sm font-semibold hover:bg-zuma-600 transition-colors"
+                <a
+                    href="/admin/regions"
+                    className="mt-6 inline-flex px-4 py-2 bg-zuma-500 text-white rounded-xl text-sm font-semibold hover:bg-zuma-600 transition-colors"
                 >
                     Tentar Novamente
-                </button>
+                </a>
             </div>
         )
     }
 
     return (
-        <div className="space-y-6">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight">Regiões (Gift Cards)</h1>
-                <p className="mt-1 text-sm text-muted">Gerencie as regiões disponíveis para ofertas.</p>
-            </div>
-
-            <RegionsManager initialRegions={regions || []} />
-        </div>
+        <RegionsManager initialRegions={regions || []} />
     )
 }
