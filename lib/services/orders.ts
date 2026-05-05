@@ -58,7 +58,7 @@ export async function verifyItemPrices(
 
   const { data: offers, error } = await supabase
     .from('offers')
-    .select('id, price, status')
+    .select('id, price, status, stock_quantity, is_unlimited')
     .in('id', offerIds)
 
   if (error) throw new Error(`Failed to verify prices: ${error.message}`)
@@ -68,18 +68,31 @@ export async function verifyItemPrices(
   )
 
   for (const item of items) {
-    const offer = offerMap.get(item.offer_id)
+    const offer = offerMap.get(item.offer_id) as
+      | { price: number; status: string; stock_quantity: number | null; is_unlimited: boolean | null }
+      | undefined
     if (!offer) {
       throw new Error(`Offer ${item.offer_id} not found`)
     }
-    if ((offer as any).status !== 'active') {
+    if (offer.status !== 'active') {
       throw new Error(`Offer ${item.offer_id} is not active`)
     }
     // Allow a tiny floating-point tolerance
-    if (Math.abs(Number((offer as any).price) - item.unit_price) > 0.01) {
+    if (Math.abs(Number(offer.price) - item.unit_price) > 0.01) {
       throw new Error(
-        `Price mismatch for offer ${item.offer_id}: expected ${(offer as any).price}, received ${item.unit_price}`
+        `Price mismatch for offer ${item.offer_id}: expected ${offer.price}, received ${item.unit_price}`
       )
+    }
+    // Stock check: unlimited offers always pass; otherwise the live count
+    // must cover the requested quantity. Re-checks the DB row, never the
+    // client-supplied payload.
+    if (!offer.is_unlimited) {
+      const available = offer.stock_quantity ?? 0
+      if (available < item.qty) {
+        throw new Error(
+          `Insufficient stock for offer ${item.offer_id}: available ${available}, requested ${item.qty}`
+        )
+      }
     }
   }
 }

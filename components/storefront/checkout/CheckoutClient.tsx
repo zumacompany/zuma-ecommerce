@@ -2,7 +2,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { APP_CONFIG } from "@/lib/config";
 import { useI18n } from "@/lib/i18n";
+import { useAuth } from "@/lib/auth-context";
+import { supabase } from "@/lib/supabase/browser";
 import CheckoutSummary from "@/components/storefront/checkout/CheckoutSummary";
+
+function stripPhonePrefix(raw: string | null | undefined): string {
+  if (!raw) return "";
+  const trimmed = raw.trim();
+  if (trimmed.startsWith(APP_CONFIG.DEFAULT_PHONE_PREFIX)) {
+    return trimmed.slice(APP_CONFIG.DEFAULT_PHONE_PREFIX.length).replace(/[^0-9]/g, "");
+  }
+  return trimmed.replace(/[^0-9]/g, "");
+}
 
 type Offer = {
   id: string;
@@ -11,6 +22,8 @@ type Offer = {
   denomination_currency: string;
   price: number;
   brand?: { id: string; name: string; slug: string };
+  stock_quantity?: number | null;
+  is_unlimited?: boolean | null;
 };
 
 type PaymentMethod = {
@@ -60,6 +73,7 @@ export default function CheckoutClient({
   paymentMethods: PaymentMethod[];
 }) {
   const { t, locale } = useI18n();
+  const { user, loading: authLoading } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
@@ -74,6 +88,7 @@ export default function CheckoutClient({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [provincesData, setProvincesData] = useState<ProvinceWithCities[]>([]);
+  const [prefilled, setPrefilled] = useState(false);
 
   const selectedPaymentMethod = useMemo(
     () => paymentMethods.find((p) => p.id === selectedPayment) ?? null,
@@ -111,6 +126,43 @@ export default function CheckoutClient({
       .catch(() => {});
   }, [offer.id]);
 
+  // One-shot prefill from the customer record once auth resolves. We never
+  // overwrite later edits, so user input always wins.
+  useEffect(() => {
+    if (authLoading || prefilled) return;
+    if (!user) {
+      setPrefilled(true);
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      const { data, error: rpcError } = await supabase.rpc(
+        "get_customer_by_auth_user",
+        { p_auth_user_id: user.id },
+      );
+      if (cancelled) return;
+
+      const row =
+        !rpcError && Array.isArray(data) && data.length > 0 ? data[0] : null;
+
+      const fallbackEmail = user.email ?? "";
+      setName((prev) => (prev === "" ? row?.name ?? "" : prev));
+      setEmail((prev) => (prev === "" ? row?.email ?? fallbackEmail : prev));
+      setWhatsapp((prev) =>
+        prev === "" ? stripPhonePrefix(row?.whatsapp_e164) : prev,
+      );
+      setProvince((prev) => (prev === "" ? row?.province ?? "" : prev));
+      setCity((prev) => (prev === "" ? row?.city ?? "" : prev));
+      setBirthdate((prev) => (prev === "" ? row?.birthdate ?? "" : prev));
+      setPrefilled(true);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authLoading, user, prefilled]);
+
   function validEmail(e: string) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e);
   }
@@ -126,7 +178,11 @@ export default function CheckoutClient({
       ? t("checkout.errors.invalidWhatsapp") || "Número inválido"
       : null;
 
+  const outOfStock =
+    !offer.is_unlimited && (offer.stock_quantity ?? 0) <= 0;
+
   const valid = Boolean(
+    !outOfStock &&
     name.trim() !== "" &&
     validEmail(email) &&
     whatsapp.trim() !== "" &&
@@ -421,6 +477,11 @@ export default function CheckoutClient({
 
       {/* Coluna Lateral - Resumo do Pedido */}
       <div className="space-y-6">
+        {outOfStock && (
+          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300">
+            {t("checkout.errors.outOfStock")}
+          </div>
+        )}
         <CheckoutSummary
           brandName={offer.brand?.name ?? "Produto"}
           detail={detailLabel}
@@ -429,7 +490,11 @@ export default function CheckoutClient({
           subtotalLabel={totalLabel}
           totalLabel={totalLabel}
           actionLabel={
-            submitting ? t("common.processing") : t("checkout.finalizeOrder")
+            outOfStock
+              ? t("checkout.soldOut")
+              : submitting
+                ? t("common.processing")
+                : t("checkout.finalizeOrder")
           }
           actionDisabled={!valid || submitting}
           actionType="submit"

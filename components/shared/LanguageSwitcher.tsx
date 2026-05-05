@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { SUPPORTED_LOCALES, useI18n } from '../lib/i18n';
+import { SUPPORTED_LOCALES, useI18n } from '../../lib/i18n';
 
 type LanguageSwitcherProps = {
     compact?: boolean;

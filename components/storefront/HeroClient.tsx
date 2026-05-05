@@ -1,5 +1,5 @@
 "use client";
-import { useI18n } from "../lib/i18n";
+import { useI18n } from "../../lib/i18n";
 
 type SiteContent = {
   hero_title?: string | null;

@@ -13,6 +13,10 @@ export default function AdminLoginPage() {
     const [password, setPassword] = useState("")
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [showForgot, setShowForgot] = useState(false)
+    const [forgotEmail, setForgotEmail] = useState("")
+    const [forgotLoading, setForgotLoading] = useState(false)
+    const [forgotMessage, setForgotMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
 
     useEffect(() => {
         let active = true
@@ -47,6 +51,30 @@ export default function AdminLoginPage() {
             active = false
         }
     }, [router])
+
+    async function handleForgotPassword(e: React.FormEvent) {
+        e.preventDefault()
+        if (!forgotEmail.trim()) return
+        setForgotLoading(true)
+        setForgotMessage(null)
+        try {
+            const { error: resetError } = await supabase.auth.resetPasswordForEmail(forgotEmail.trim(), {
+                redirectTo: `${window.location.origin}/admin/reset-password`,
+            })
+            if (resetError) throw resetError
+            setForgotMessage({
+                type: "success",
+                text: "If an admin account matches this email, a reset link has been sent.",
+            })
+        } catch (err: any) {
+            setForgotMessage({
+                type: "error",
+                text: err?.message || "Could not send the reset email. Try again.",
+            })
+        } finally {
+            setForgotLoading(false)
+        }
+    }
 
     async function handleLogin(e: React.FormEvent) {
         e.preventDefault()
@@ -155,6 +183,60 @@ export default function AdminLoginPage() {
                             </div>
                         </div>
                     </div>
+
+                    <div className="flex justify-end -mt-2">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setShowForgot((v) => !v)
+                                setForgotMessage(null)
+                                if (!showForgot && email) setForgotEmail(email)
+                            }}
+                            className="text-xs font-semibold text-zuma-500 hover:text-zuma-600"
+                        >
+                            {showForgot ? "Hide reset" : "Forgot password?"}
+                        </button>
+                    </div>
+
+                    {showForgot && (
+                        <div className="rounded-xl border border-borderc bg-background/50 p-4 space-y-3">
+                            <p className="text-xs text-muted">
+                                Enter your admin email to receive a password reset link.
+                            </p>
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <Mail className="h-4 w-4 text-muted/50" />
+                                </div>
+                                <input
+                                    type="email"
+                                    value={forgotEmail}
+                                    onChange={(e) => setForgotEmail(e.target.value)}
+                                    className="block w-full pl-10 pr-3 py-2 bg-background border border-borderc rounded-xl text-foreground placeholder-muted/50 focus:ring-2 focus:ring-zuma-500 focus:border-zuma-500 transition-all sm:text-sm"
+                                    placeholder="admin@zuma.io"
+                                    autoComplete="email"
+                                />
+                            </div>
+                            {forgotMessage && (
+                                <div
+                                    className={`rounded-lg border px-3 py-2 text-xs ${
+                                        forgotMessage.type === "success"
+                                            ? "border-green-200 bg-green-50 text-green-700"
+                                            : "border-red-200 bg-red-50 text-red-700"
+                                    }`}
+                                >
+                                    {forgotMessage.text}
+                                </div>
+                            )}
+                            <button
+                                type="button"
+                                onClick={handleForgotPassword}
+                                disabled={forgotLoading || !forgotEmail.trim()}
+                                className="w-full flex justify-center items-center gap-2 py-2 px-4 border border-borderc text-xs font-semibold rounded-xl text-foreground bg-card hover:bg-muted/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {forgotLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send reset link"}
+                            </button>
+                        </div>
+                    )}
 
                     <div>
                         <button

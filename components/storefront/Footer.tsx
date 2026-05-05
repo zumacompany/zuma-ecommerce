@@ -1,9 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ShieldCheck, Lock } from "lucide-react";
-import { useI18n } from "../lib/i18n";
+import { useI18n } from "../../lib/i18n";
 
 export default function Footer() {
     const { t } = useI18n();
@@ -51,16 +50,6 @@ export default function Footer() {
                                 </a>
                             </div>
                         )}
-                    </div>
-
-                    {/* Links */}
-                    <div className="flex flex-col gap-2 text-sm font-medium opacity-90">
-                        <h4 className="font-bold text-lg mb-2 opacity-100">{t('website.footer.help')}</h4>
-                        <Link href="/about" className="hover:underline">{t('website.footer.about')}</Link>
-                        <Link href="/refunds" className="hover:underline">{t('website.footer.refunds')}</Link>
-                        <Link href="/privacy" className="hover:underline">{t('website.footer.privacy')}</Link>
-                        <Link href="/cookies" className="hover:underline">{t('website.footer.cookies')}</Link>
-                        <Link href="/faq" className="hover:underline">{t('website.footer.faqs')}</Link>
                     </div>
 
                     {/* Payment */}

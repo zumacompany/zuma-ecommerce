@@ -2,10 +2,29 @@
 
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n";
+import { useAuth } from "@/lib/auth-context";
 import OrderSuccessActions from "@/components/storefront/checkout/OrderSuccessActions";
 
 function getLocaleTag(locale: string) {
   return locale === "pt" ? "pt-MZ" : "en-US";
+}
+
+function buildRegisterPrefill(input: {
+  email?: string | null;
+  whatsapp?: string | null;
+  name?: string | null;
+}): string | null {
+  const payload: Record<string, string> = {};
+  if (input.email) payload.email = input.email;
+  if (input.whatsapp) payload.whatsapp = input.whatsapp;
+  if (input.name) payload.name = input.name;
+  if (Object.keys(payload).length === 0) return null;
+  if (typeof window === "undefined") return null;
+  try {
+    return window.btoa(JSON.stringify(payload));
+  } catch {
+    return null;
+  }
 }
 
 function formatMoney(amount: number, currency: string, locale: string) {
@@ -37,12 +56,25 @@ export default function CheckoutSuccess({
   items: any[];
 }) {
   const { t, locale } = useI18n();
+  const { user, loading: authLoading } = useAuth();
   const paymentMethodName = order.payment_method_snapshot?.name ?? "N/A";
   const firstName =
     String(order.customer_name ?? "")
       .trim()
       .split(/\s+/)
       .filter(Boolean)[0] ?? "Cliente";
+
+  const showRegisterCta = !authLoading && !user;
+  const registerPrefill = showRegisterCta
+    ? buildRegisterPrefill({
+        email: order.customer_email,
+        whatsapp: order.customer_whatsapp,
+        name: order.customer_name,
+      })
+    : null;
+  const registerHref = `/cliente/login?mode=register${
+    registerPrefill ? `&prefill=${encodeURIComponent(registerPrefill)}` : ""
+  }`;
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -170,6 +202,27 @@ export default function CheckoutSuccess({
             </div>
           )}
         </div>
+
+        {showRegisterCta && (
+          <div className="mt-8 rounded-2xl border border-primary/20 bg-primary/5 p-5">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h3 className="text-base font-semibold text-foreground">
+                  {t("customer.saveOrderTitle")}
+                </h3>
+                <p className="mt-1 text-sm text-muted">
+                  {t("customer.saveOrderSubtitle")}
+                </p>
+              </div>
+              <Link
+                href={registerHref}
+                className="inline-flex shrink-0 items-center justify-center rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary/90"
+              >
+                {t("customer.createAccount")}
+              </Link>
+            </div>
+          </div>
+        )}
 
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Link

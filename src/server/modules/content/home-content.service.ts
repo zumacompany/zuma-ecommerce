@@ -99,9 +99,26 @@ export async function updateFeaturedBrandSlugs(request: Request) {
   return { success: true }
 }
 
+function unwrapQuery<T>(
+  label: string,
+  settled: PromiseSettledResult<{ data: unknown; error: unknown }>,
+  failures: string[],
+): T | null {
+  if (settled.status === 'rejected') {
+    failures.push(`${label}: ${settled.reason instanceof Error ? settled.reason.message : 'rejected'}`)
+    return null
+  }
+  const err = settled.value.error as { message?: string } | null
+  if (err) {
+    failures.push(`${label}: ${err.message ?? 'unknown'}`)
+    return null
+  }
+  return (settled.value.data as T) ?? null
+}
+
 export async function getAdminSiteSnapshot() {
   const adminClient = createSupabaseAdminClient()
-  const [homeRes, trustRes, faqRes, featuredRes, brandsRes, settingsRes] = await Promise.all([
+  const [homeRes, trustRes, faqRes, featuredRes, brandsRes, settingsRes] = await Promise.allSettled([
     adminClient.from('home_content').select('*').eq('id', 1).maybeSingle(),
     adminClient.from('trust_points').select('id, title, subtitle, sort_order').order('sort_order'),
     adminClient.from('faqs').select('id, question, answer, sort_order').order('sort_order'),
@@ -113,26 +130,28 @@ export async function getAdminSiteSnapshot() {
     adminClient.from('site_content').select('key, value').in('key', [...SITE_SETTING_KEYS]),
   ])
 
-  const firstError =
-    homeRes.error
-    || trustRes.error
-    || faqRes.error
-    || featuredRes.error
-    || brandsRes.error
-    || settingsRes.error
+  const failures: string[] = []
+  const home = unwrapQuery<HomeContentRow>('home_content', homeRes, failures)
+  const trustPoints = unwrapQuery<unknown[]>('trust_points', trustRes, failures)
+  const faqs = unwrapQuery<unknown[]>('faqs', faqRes, failures)
+  const featured = unwrapQuery<{ brand_slug: string }[]>('home_featured_brands', featuredRes, failures)
+  const brands = unwrapQuery<BrandRow[]>('brands', brandsRes, failures)
+  const settings = unwrapQuery<{ key: string; value: unknown }[]>('site_content', settingsRes, failures)
 
-  if (firstError) {
-    throw new ValidationError(firstError.message)
+  if (failures.length > 0) {
+    console.error('[getAdminSiteSnapshot] partial load:', failures.join('; '))
   }
 
   return {
     data: {
-      home: (homeRes.data ?? {}) as HomeContentRow,
-      trust_points: trustRes.data ?? [],
-      faqs: faqRes.data ?? [],
-      featured_brand_slugs: (featuredRes.data ?? []).map((row: { brand_slug: string }) => row.brand_slug),
-      brands: (brandsRes.data ?? []) as BrandRow[],
-      settings: mapSiteSettingsRows((settingsRes.data ?? []) as Array<{ key: string; value: unknown }>),
+      home: (home ?? {}) as HomeContentRow,
+      trust_points: trustPoints ?? [],
+      faqs: faqs ?? [],
+      featured_brand_slugs: (featured ?? []).map((row) => row.brand_slug),
+      brands: brands ?? [],
+      settings: mapSiteSettingsRows(settings ?? []),
     },
+    partial: failures.length > 0,
+    failures,
   }
 }

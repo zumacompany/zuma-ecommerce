@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { useI18n } from "../lib/i18n";
+import { useI18n } from "../../lib/i18n";
 
 type Category = {
     id: string;
@@ -42,7 +42,6 @@ export default function CategoryRowsClient({ data }: Props) {
             <div className="container max-w-[1300px] px-4">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {visibleCategories.map((cat) => {
-                        // Filter brands for this category
                         const catBrands = brands.filter(b => b.category_id === cat.id);
 
                         return (
@@ -65,7 +64,6 @@ export default function CategoryRowsClient({ data }: Props) {
                                             href={`/b/${brand.slug}`}
                                             className="group relative flex flex-col bg-muted/20 hover:bg-card/50 border border-transparent hover:border-borderc rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
                                         >
-                                            {/* Card Image Area */}
                                             <div className="aspect-[4/3] flex items-center justify-center p-4 relative z-10">
                                                 {brand.logo_path ? (
                                                     <img
@@ -80,14 +78,12 @@ export default function CategoryRowsClient({ data }: Props) {
                                                 )}
                                             </div>
 
-                                            {/* Brand Name (Overlay like) or Bottom */}
                                             <div className="px-3 pb-3 pt-0 text-center relative z-10">
                                                 <span className="text-xs font-semibold text-foreground/70 group-hover:text-foreground transition-colors line-clamp-1">
                                                     {brand.name}
                                                 </span>
                                             </div>
 
-                                            {/* Gradient Background on Hover */}
                                             <div className="absolute inset-0 bg-gradient-to-b from-transparent to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                                         </Link>
                                     ))}

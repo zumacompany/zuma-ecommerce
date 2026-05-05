@@ -16,18 +16,23 @@ export default function OrderActions({
     const router = useRouter()
     const [loading, setLoading] = useState(false)
     const [showConfirm, setShowConfirm] = useState(false)
+    const [error, setError] = useState<string | null>(null)
 
     async function executeDelete() {
         setLoading(true)
+        setError(null)
         try {
             const res = await fetch(`/api/admin/orders/${orderId}`, {
                 method: 'DELETE'
             })
-            if (!res.ok) throw new Error('Failed to delete')
+            if (!res.ok) {
+                const json = await res.json().catch(() => null)
+                throw new Error(json?.error || 'Failed to delete order')
+            }
             setShowConfirm(false)
             router.refresh()
         } catch (err) {
-            alert('Error deleting order')
+            setError(err instanceof Error ? err.message : 'Error deleting order')
         } finally {
             setLoading(false)
         }
@@ -37,7 +42,10 @@ export default function OrderActions({
         <>
             <ConfirmationModal
                 isOpen={showConfirm}
-                onClose={() => setShowConfirm(false)}
+                onClose={() => {
+                    setShowConfirm(false)
+                    setError(null)
+                }}
                 onConfirm={executeDelete}
                 title="Delete Order"
                 description={`Are you sure you want to delete order ${orderNumber}? This action cannot be undone.`}
@@ -46,6 +54,14 @@ export default function OrderActions({
             />
 
             <div className="flex items-center justify-end gap-2">
+                {error && (
+                    <span
+                        className="text-xs text-red-600 max-w-[160px] truncate"
+                        title={error}
+                    >
+                        {error}
+                    </span>
+                )}
                 <Link
                     href={`/admin/orders/${orderNumber}`}
                     className="p-1.5 text-muted hover:text-zuma-500 hover:bg-zuma-50 rounded-md transition-colors"
@@ -55,7 +71,10 @@ export default function OrderActions({
                 </Link>
 
                 <button
-                    onClick={() => setShowConfirm(true)}
+                    onClick={() => {
+                        setError(null)
+                        setShowConfirm(true)
+                    }}
                     disabled={loading}
                     className="p-1.5 text-muted hover:text-red-600 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50"
                     title="Delete Order"

@@ -71,6 +71,7 @@ export async function getHomePageData() {
       supabaseAdmin
         .from('brands')
         .select('id, name, slug, logo_path, category_id, status')
+        .eq('status', 'active')
         .order('name'),
     ])
 
@@ -110,15 +111,14 @@ export async function getHomePageData() {
         logo_path: logo_path ?? null,
       }))
 
-    const activeBrands = brands
-      .filter((brand) => brand.status === 'active')
-      .map(({ id, name, slug, logo_path, category_id }) => ({
-        id,
-        name,
-        slug,
-        logo_path: logo_path ?? null,
-        category_id: category_id ?? '',
-      }))
+    // Active filter is applied at the DB layer above, so this is just a shape mapper.
+    const activeBrands = brands.map(({ id, name, slug, logo_path, category_id }) => ({
+      id,
+      name,
+      slug,
+      logo_path: logo_path ?? null,
+      category_id: category_id ?? '',
+    }))
 
     return {
       siteContent,

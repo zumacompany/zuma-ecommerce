@@ -3,9 +3,42 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { useI18n } from "@/lib/i18n";
+import { APP_CONFIG } from "@/lib/config";
 import { supabase } from "@/lib/supabase/browser";
 import Link from "next/link";
 import CustomerAuthShell from "@/components/customer/CustomerAuthShell";
+
+type PrefillPayload = {
+  email?: string;
+  whatsapp?: string;
+  name?: string;
+};
+
+function decodePrefill(raw: string | null): PrefillPayload | null {
+  if (!raw) return null;
+  if (typeof window === "undefined") return null;
+  try {
+    const decoded = window.atob(raw);
+    const parsed = JSON.parse(decoded);
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      return parsed as PrefillPayload;
+    }
+  } catch {
+    /* malformed prefill — ignore */
+  }
+  return null;
+}
+
+function stripPhonePrefix(raw: string | undefined): string {
+  if (!raw) return "";
+  const trimmed = raw.trim();
+  if (trimmed.startsWith(APP_CONFIG.DEFAULT_PHONE_PREFIX)) {
+    return trimmed
+      .slice(APP_CONFIG.DEFAULT_PHONE_PREFIX.length)
+      .replace(/[^0-9]/g, "");
+  }
+  return trimmed.replace(/[^0-9]/g, "");
+}
 
 export default function CustomerLoginPage() {
   const { locale, t } = useI18n();
@@ -32,6 +65,20 @@ export default function CustomerLoginPage() {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     setResetSuccess(params.get("reset") === "success");
+
+    if (params.get("mode") === "register") {
+      setMode("register");
+    }
+
+    const prefill = decodePrefill(params.get("prefill"));
+    if (prefill) {
+      if (prefill.email) setEmail((prev) => (prev === "" ? prefill.email! : prev));
+      if (prefill.name) setName((prev) => (prev === "" ? prefill.name! : prev));
+      if (prefill.whatsapp) {
+        const stripped = stripPhonePrefix(prefill.whatsapp);
+        setWhatsapp((prev) => (prev === "" ? stripped : prev));
+      }
+    }
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {

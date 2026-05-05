@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import LanguageSwitcher from "@/components/LanguageSwitcher"
-import ThemeToggle from "@/components/ThemeToggle"
+import LanguageSwitcher from "@/components/shared/LanguageSwitcher"
+import ThemeToggle from "@/components/shared/ThemeToggle"
 import { useI18n } from "@/lib/i18n"
 import { supabase } from "@/lib/supabase/browser"
 

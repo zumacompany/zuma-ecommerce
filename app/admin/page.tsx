@@ -1,6 +1,8 @@
 import DashboardUI from '../../components/admin/DashboardUI'
 import { supabaseAdmin } from '../../lib/supabase/server'
-import { ORDER_QUEUE_STATUSES } from '@/src/server/modules/orders/order-status'
+import { ORDER_QUEUE_STATUSES, type OrderStatus } from '@/src/server/modules/orders/order-status'
+
+const DELIVERED_STATUS: OrderStatus = 'delivered'
 
 type Props = { searchParams?: { [key: string]: string | undefined } }
 type RpcError = { code?: string; message?: string } | null | undefined
@@ -346,7 +348,7 @@ export default async function AdminDashboard({ searchParams }: Props) {
   // delivered orders & revenue
   let ordersQuery = supabaseAdmin.from('orders').select('id, total_amount, created_at')
   if (start && end) ordersQuery = ordersQuery.gte('created_at', start.toISOString()).lte('created_at', end.toISOString())
-  const { data: deliveredOrders } = await ordersQuery.eq('status', 'delivered')
+  const { data: deliveredOrders } = await ordersQuery.eq('status', DELIVERED_STATUS)
   const delivered = (deliveredOrders ?? []) as DeliveredOrder[]
   const deliveredCount = delivered.length
   const estimatedRevenue = delivered.reduce((s, o) => s + (o.total_amount ?? 0), 0)

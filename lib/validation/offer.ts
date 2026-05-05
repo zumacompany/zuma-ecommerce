@@ -11,6 +11,7 @@ export const CreateOfferSchema = z.object({
   is_unlimited: z.boolean().optional(),
   auto_fulfill: z.boolean().optional(),
   product_id: z.string().uuid().optional().nullable(),
+  show_when_out_of_stock: z.boolean().optional(),
 })
 
 export const UpdateOfferSchema = CreateOfferSchema.partial()

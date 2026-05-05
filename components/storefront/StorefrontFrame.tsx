@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import Header from "@/components/storefront/Header";
+import Footer from "@/components/storefront/Footer";
 
 export default function StorefrontFrame({ children }: { children: ReactNode }) {
   return (

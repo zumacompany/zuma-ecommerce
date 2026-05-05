@@ -1,8 +1,8 @@
 "use client"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import ThemeToggle from "../ThemeToggle"
-import LanguageSwitcher from "../LanguageSwitcher"
+import ThemeToggle from "../shared/ThemeToggle"
+import LanguageSwitcher from "../shared/LanguageSwitcher"
 import { useI18n } from "../../lib/i18n"
 import { adminNavSections } from "./adminNav"
 

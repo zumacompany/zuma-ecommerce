@@ -1,9 +1,9 @@
-import HeroClient from '../../components/HeroClient'
-import FeaturedBrandsClient from '../../components/FeaturedBrandsClient'
-import CategoryRowsClient from '../../components/CategoryRowsClient'
-import TrustPointsClient from '../../components/TrustPointsClient'
-import FaqClient from '../../components/FaqClient'
-import PageAnalytics from '../../components/PageAnalytics'
+import HeroClient from '../../components/storefront/HeroClient'
+import FeaturedBrandsClient from '../../components/storefront/FeaturedBrandsClient'
+import CategoryRowsClient from '../../components/storefront/CategoryRowsClient'
+import TrustPointsClient from '../../components/storefront/TrustPointsClient'
+import FaqClient from '../../components/storefront/FaqClient'
+import PageAnalytics from '../../components/storefront/PageAnalytics'
 import { getHomePageData } from '../../lib/home-data'
 
 export const revalidate = 60

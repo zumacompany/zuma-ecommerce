@@ -1,8 +1,11 @@
-import { supabaseAdmin } from "../../../lib/supabase/server";
 import CheckoutClient from "../../../components/storefront/checkout/CheckoutClient";
 import { CheckoutHeader } from "../../../components/storefront/checkout/CheckoutHeader";
 import CheckoutShell from "../../../components/storefront/checkout/CheckoutShell";
 import Link from "next/link";
+import {
+  getActivePublicOfferById,
+  listActivePublicPaymentMethods,
+} from "@/src/server/modules/catalog/catalog-public.service";
 
 type Props = {
   searchParams?: { [key: string]: string | string[] | undefined };
@@ -59,18 +62,20 @@ export default async function CheckoutPage({ searchParams }: Props) {
     );
   }
 
-  const { data: offer, error: offerErr } = await supabaseAdmin
-    .from("offers")
-    .select("*, brand:brands(id, name, slug)")
-    .eq("id", offerId)
-    .maybeSingle();
+  let offer: Awaited<ReturnType<typeof getActivePublicOfferById>>;
+  let paymentMethods: Awaited<ReturnType<typeof listActivePublicPaymentMethods>>;
 
-  if (offerErr) {
+  try {
+    [offer, paymentMethods] = await Promise.all([
+      getActivePublicOfferById(offerId),
+      listActivePublicPaymentMethods(),
+    ]);
+  } catch (err: any) {
     return (
       <CheckoutMessage
         tone="error"
         title="Não foi possível carregar a oferta"
-        body={offerErr.message}
+        body={err?.message ?? "Erro ao carregar o checkout."}
       />
     );
   }
@@ -84,28 +89,23 @@ export default async function CheckoutPage({ searchParams }: Props) {
     );
   }
 
-  const { data: paymentMethods, error: pmErr } = await supabaseAdmin
-    .from("payment_methods")
-    .select("id, name, type, instructions_md, details")
-    .eq("status", "active")
-    .order("sort_order");
-
-  if (pmErr) {
-    return (
-      <CheckoutMessage
-        tone="error"
-        title="Erro a carregar métodos de pagamento"
-        body={pmErr.message}
-      />
-    );
-  }
+  const checkoutOffer = {
+    id: offer.id,
+    region_code: offer.region_code ?? "",
+    denomination_value: offer.denomination_value ?? 0,
+    denomination_currency: offer.denomination_currency ?? "",
+    price: offer.price,
+    brand: offer.brand ?? undefined,
+    stock_quantity: offer.stock_quantity,
+    is_unlimited: offer.is_unlimited,
+  };
 
   return (
     <CheckoutShell header={<CheckoutHeader />}>
       <CheckoutClient
-        offer={offer}
+        offer={checkoutOffer}
         qty={qty}
-        paymentMethods={paymentMethods ?? []}
+        paymentMethods={paymentMethods}
       />
     </CheckoutShell>
   );

@@ -4,7 +4,7 @@ import { CreateOfferSchema, UpdateOfferSchema } from '@/lib/validation/offer'
 import { ValidationError } from '@/src/server/http/errors'
 import { createSupabaseAdminClient } from '@/src/server/platform/db/supabase'
 
-const OFFER_SELECT = 'id, brand_id, brand:brands(id,name,slug), region_code, denomination_value, denomination_currency, price, cost_price, status, stock_quantity, is_unlimited, auto_fulfill, product_id'
+const OFFER_SELECT = 'id, brand_id, brand:brands(id,name,slug), region_code, denomination_value, denomination_currency, price, cost_price, status, stock_quantity, is_unlimited, auto_fulfill, product_id, show_when_out_of_stock'
 
 export async function listOffers() {
   const adminClient = createSupabaseAdminClient()

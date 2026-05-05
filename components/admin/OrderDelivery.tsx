@@ -16,7 +16,8 @@ const copy = {
     noEmail: "Este cliente não tem um email registado.",
     missingCodes: "Adicione os códigos antes de enviar.",
     whatsappReady: "Registo guardado. A conversa do WhatsApp foi aberta.",
-    emailReady: "Registo guardado. O email foi preparado no seu cliente de correio.",
+    emailReady: "Registo guardado. Conteúdo do email copiado — cole no seu cliente de correio para {email}.",
+    emailCopyFailed: "Registo guardado, mas não foi possível copiar o conteúdo do email para a área de transferência.",
   },
   en: {
     saveError: "Could not save the changes.",
@@ -25,7 +26,8 @@ const copy = {
     noEmail: "This customer does not have an email address on file.",
     missingCodes: "Add the delivery codes before sending.",
     whatsappReady: "Saved. The WhatsApp conversation was opened.",
-    emailReady: "Saved. The email draft was prepared in your mail app.",
+    emailReady: "Saved. Email content copied — paste it into your mail client and send to {email}.",
+    emailCopyFailed: "Saved, but the email content could not be copied to the clipboard.",
   },
 } as const
 
@@ -154,6 +156,15 @@ export default function OrderDelivery({
     }
   }
 
+  async function copyEmailToClipboard(subject: string, body: string, recipient: string) {
+    const payload = `To: ${recipient}\nSubject: ${subject}\n\n${body}`
+    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(payload)
+      return true
+    }
+    return false
+  }
+
   async function handleSendEmail() {
     if (!customerEmail) {
       setFeedback({ type: "error", text: text.noEmail })
@@ -167,17 +178,24 @@ export default function OrderDelivery({
 
     const subject = "Seus Códigos de Gift Card - Zuma"
     const body = `Olá ${customerName || "Cliente"}!\n\nAqui estão os seus códigos de gift card:\n\n${codes}\n\nObrigado pela sua compra!\n\nEquipe Zuma`
-    const mailtoURL = `mailto:${customerEmail}?subject=${encodeURIComponent(
-      subject
-    )}&body=${encodeURIComponent(body)}`
 
     setFeedback(null)
     setActiveAction("email")
 
     try {
       await persistChanges(codes, buildActionNote("Email", customerEmail))
-      window.location.href = mailtoURL
-      setFeedback({ type: "success", text: text.emailReady })
+      let copied = false
+      try {
+        copied = await copyEmailToClipboard(subject, body, customerEmail)
+      } catch {
+        copied = false
+      }
+      setFeedback({
+        type: copied ? "success" : "error",
+        text: copied
+          ? text.emailReady.replace("{email}", customerEmail)
+          : text.emailCopyFailed,
+      })
     } catch (error) {
       setFeedback({
         type: "error",

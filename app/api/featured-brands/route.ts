@@ -28,11 +28,12 @@ export async function GET() {
       return NextResponse.json({ data: [], title })
     }
 
-    // 3. Fetch brands details
+    // 3. Fetch brands details — only active brands surface to the storefront.
     const { data: brandsRaw, error: brandsErr } = await supabasePublic
       .from('brands')
       .select('id, name, slug, logo_path')
       .in('slug', slugs)
+      .eq('status', 'active')
 
     if (brandsErr) throw brandsErr
 

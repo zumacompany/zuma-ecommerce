@@ -1,5 +1,5 @@
 "use client";
-import { useI18n } from "../lib/i18n";
+import { useI18n } from "../../lib/i18n";
 
 type TrustPoint = { title: string; subtitle?: string };
 type SiteData = { trust_points: TrustPoint[]; trust_points_title?: string | null };

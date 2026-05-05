@@ -2,10 +2,10 @@
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import ThemeToggle from "./ThemeToggle";
+import ThemeToggle from "../shared/ThemeToggle";
 import BackButton from "./BackButton";
-import LanguageSwitcher from "./LanguageSwitcher";
-import { useI18n } from "../lib/i18n";
+import LanguageSwitcher from "../shared/LanguageSwitcher";
+import { useI18n } from "../../lib/i18n";
 import { useAuth } from "@/lib/auth-context";
 
 function SearchIcon() {

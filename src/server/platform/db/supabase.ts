@@ -30,9 +30,9 @@ export function createSupabasePublicClient() {
   })
 }
 
-export function createSupabaseServerSessionClient() {
+export async function createSupabaseServerSessionClient() {
   const { url, key } = getPublicSupabaseEnv()
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
 
   return createServerClient(url, key, {
     cookies: {
@@ -46,7 +46,7 @@ export function createSupabaseServerSessionClient() {
 }
 
 export async function getSessionUser(): Promise<User | null> {
-  const supabase = createSupabaseServerSessionClient()
+  const supabase = await createSupabaseServerSessionClient()
   const { data, error } = await supabase.auth.getUser()
 
   if (error) return null

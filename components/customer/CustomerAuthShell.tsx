@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import LanguageSwitcher from "@/components/LanguageSwitcher";
-import ThemeToggle from "@/components/ThemeToggle";
+import LanguageSwitcher from "@/components/shared/LanguageSwitcher";
+import ThemeToggle from "@/components/shared/ThemeToggle";
 
 type CustomerAuthShellProps = {
   children: ReactNode;

@@ -3,13 +3,20 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import ThemeToggle from "@/components/ThemeToggle";
-import LanguageSwitcher from "@/components/LanguageSwitcher";
+import ThemeToggle from "@/components/shared/ThemeToggle";
+import LanguageSwitcher from "@/components/shared/LanguageSwitcher";
 import { useAuth } from "@/lib/auth-context";
 import { useI18n } from "@/lib/i18n";
 import CustomerNav, {
   type CustomerNavItem,
 } from "@/components/customer/CustomerNav";
+
+const SHIPPED_CUSTOMER_ROUTES = new Set<string>([
+  "/cliente/dashboard",
+  "/cliente/pedidos",
+  "/cliente/pontos",
+  "/cliente/perfil",
+]);
 
 export default function CustomerShell({ children }: { children: ReactNode }) {
   const { t } = useI18n();
@@ -21,7 +28,7 @@ export default function CustomerShell({ children }: { children: ReactNode }) {
     { href: "/cliente/pedidos", label: t("customer.orders"), icon: "📦" },
     { href: "/cliente/pontos", label: t("customer.points"), icon: "🎁" },
     { href: "/cliente/perfil", label: t("customer.profile"), icon: "👤" },
-  ];
+  ].filter((item) => SHIPPED_CUSTOMER_ROUTES.has(item.href));
 
   async function handleSignOut() {
     await signOut();

@@ -31,6 +31,7 @@ type Offer = {
   is_unlimited?: boolean
   auto_fulfill?: boolean
   product_id?: string | null
+  show_when_out_of_stock?: boolean
   status: "active" | "inactive"
   created_at: string
   brand: { id: string; name: string; slug: string } | null
@@ -89,6 +90,7 @@ export default function OffersManager({
     denomination_currency: "",
     price: "",
     status: "active" as "active" | "inactive",
+    show_when_out_of_stock: true,
   })
   const [loading, setLoading] = useState(false)
 
@@ -115,6 +117,7 @@ export default function OffersManager({
       denomination_currency: "",
       price: "",
       status: "active",
+      show_when_out_of_stock: true,
     })
   }
 
@@ -175,6 +178,7 @@ export default function OffersManager({
           denomination_currency: formData.denomination_currency,
           price: parseFloat(formData.price),
           status: formData.status,
+          show_when_out_of_stock: formData.show_when_out_of_stock,
         }),
       })
 
@@ -206,6 +210,7 @@ export default function OffersManager({
           denomination_currency: formData.denomination_currency,
           price: parseFloat(formData.price),
           status: formData.status,
+          show_when_out_of_stock: formData.show_when_out_of_stock,
         }),
       })
 
@@ -319,6 +324,7 @@ export default function OffersManager({
       denomination_currency: offer.denomination_currency,
       price: offer.price.toString(),
       status: offer.status,
+      show_when_out_of_stock: offer.show_when_out_of_stock ?? true,
     })
     setShowEditModal(true)
   }
@@ -468,6 +474,27 @@ export default function OffersManager({
                     <option value="active">{t("common.active")}</option>
                     <option value="inactive">{t("common.inactive")}</option>
                   </select>
+                </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <label className={`${label} flex items-start gap-2 cursor-pointer`}>
+                    <input
+                      type="checkbox"
+                      checked={formData.show_when_out_of_stock}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          show_when_out_of_stock: e.target.checked,
+                        })
+                      }
+                      className="mt-1 rounded border-borderc"
+                    />
+                    <span>
+                      <span className="block">{t("offers.fields.showWhenOutOfStock")}</span>
+                      <span className="block text-xs font-normal text-muted">
+                        {t("offers.fields.showWhenOutOfStockHelp")}
+                      </span>
+                    </span>
+                  </label>
                 </div>
               </div>
             </div>

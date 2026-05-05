@@ -1,22 +1,37 @@
 import { supabaseAdmin } from '../../../lib/supabase/server'
 import CustomersPageUI from '../../../components/admin/CustomersPageUI'
+import { parseEnumParam, parseListParams } from '@/src/server/http/query-params'
 
 export const dynamic = 'force-dynamic'
 
+const CUSTOMERS_SORT_FIELDS = [
+  'created_at',
+  'name',
+  'email',
+  'last_order_at',
+  'total_spent',
+  'orders_count',
+  'loyalty_points',
+] as const
+
+const CUSTOMER_STATUS_FILTERS = ['active', 'inactive'] as const
+
+const PAGE_SIZE = 20
+
 export default async function AdminCustomersPage({
-  searchParams
+  searchParams,
 }: {
   searchParams: { [key: string]: string | string[] | undefined }
 }) {
-  const query = typeof searchParams.q === 'string' ? searchParams.q : ''
-  const statusFilter = typeof searchParams.status === 'string' ? searchParams.status : ''
-  const sort = typeof searchParams.sort === 'string' ? searchParams.sort : 'created_at'
-  const dir = typeof searchParams.dir === 'string' ? searchParams.dir : 'desc'
-  const page = typeof searchParams.page === 'string' ? parseInt(searchParams.page) : 1
-  const limit = 20
+  const { sort, dir, page, q } = parseListParams(searchParams, {
+    allowedSort: CUSTOMERS_SORT_FIELDS,
+    defaultSort: 'created_at',
+    defaultDir: 'desc',
+  })
+  const statusFilter = parseEnumParam(searchParams.status, CUSTOMER_STATUS_FILTERS)
 
-  const start = (page - 1) * limit
-  const end = start + limit - 1
+  const start = (page - 1) * PAGE_SIZE
+  const end = start + PAGE_SIZE - 1
 
   let supabaseQuery = supabaseAdmin
     .from('customers')
@@ -26,8 +41,10 @@ export default async function AdminCustomersPage({
     supabaseQuery = supabaseQuery.eq('status', statusFilter)
   }
 
-  if (query) {
-    supabaseQuery = supabaseQuery.or(`name.ilike.%${query}%,email.ilike.%${query}%,whatsapp_e164.ilike.%${query}%`)
+  if (q) {
+    supabaseQuery = supabaseQuery.or(
+      `name.ilike.%${q}%,email.ilike.%${q}%,whatsapp_e164.ilike.%${q}%`,
+    )
   }
 
   const { data: customers, count, error } = await supabaseQuery
@@ -38,8 +55,8 @@ export default async function AdminCustomersPage({
     <CustomersPageUI
       customers={(customers ?? []) as any[]}
       count={count ?? 0}
-      limit={limit}
-      query={query}
+      limit={PAGE_SIZE}
+      query={q}
       error={error?.message}
     />
   )

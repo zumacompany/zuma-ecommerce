@@ -1,6 +1,6 @@
 import "../styles/globals.css";
-import ErrorBoundary from "../components/ErrorBoundary";
-import Providers from "../components/Providers";
+import ErrorBoundary from "../components/shared/ErrorBoundary";
+import Providers from "../components/shared/Providers";
 
 export const metadata = {
   title: "Zuma",

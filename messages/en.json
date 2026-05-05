@@ -212,13 +212,16 @@
             "price": "Price",
             "stock": "Stock",
             "status": "Status",
-            "unknown": "Unknown"
+            "unknown": "Unknown",
+            "showWhenOutOfStock": "Show when out of stock",
+            "showWhenOutOfStockHelp": "When enabled, the offer stays visible on the storefront after it sells out; the buy button is disabled."
         },
         "stock": {
             "ok": "In stock",
             "low": "Low",
             "out": "Out",
-            "unknown": "Unknown"
+            "unknown": "Unknown",
+            "outOfStockBadge": "Out of stock"
         },
         "actions": {
             "inventory": "Manage inventory",
@@ -615,13 +618,15 @@
         "goToPayment": "Go to Payment",
         "continueWhatsApp": "Continue on WhatsApp",
         "buy": "Buy",
+        "soldOut": "Sold out",
         "termsAgreement": "By finalizing, you agree to our Terms of Use.",
         "errors": {
             "invalidEmail": "Invalid email.",
             "invalidWhatsapp": "Invalid WhatsApp number.",
             "whatsappNotConfigured": "WhatsApp number not configured. Please contact support.",
             "orderDataNotFound": "Order data not found.",
-            "whatsappPopupBlocked": "Unable to open WhatsApp. Check whether your browser is blocking pop-ups."
+            "whatsappPopupBlocked": "Unable to open WhatsApp. Check whether your browser is blocking pop-ups.",
+            "outOfStock": "This offer is sold out and cannot be purchased right now."
         },
         "whatsapp": {
             "waitingConfirmation": "Waiting for payment confirmation..."
@@ -663,7 +668,19 @@
             "fastCheckout": "Faster checkout",
             "loyaltyPoints": "Earn loyalty points",
             "exclusiveOffers": "Exclusive offers"
-        }
+        },
+        "saveOrderTitle": "Save this order with an account",
+        "saveOrderSubtitle": "Create your account to track orders, earn loyalty points, and check out faster.",
+        "profileSubtitle": "Update your personal information.",
+        "profilePersonalInfo": "Personal Information",
+        "profileSaveButton": "Save Changes",
+        "profileSaved": "Profile updated.",
+        "profileNotFound": "Place an order to start using your profile.",
+        "pointsBalance": "Point Balance",
+        "pointsSubtitle": "See your accumulated loyalty points.",
+        "pointsHowToEarnTitle": "How to earn points",
+        "pointsHowToEarnBody": "You earn points each time a delivered order is completed.",
+        "pointsHistoryEmpty": "Transaction history coming soon."
     },
     "validation": {
         "required": "This field is required",

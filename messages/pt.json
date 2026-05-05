@@ -212,13 +212,16 @@
             "price": "Preço",
             "stock": "Stock",
             "status": "Estado",
-            "unknown": "Desconhecido"
+            "unknown": "Desconhecido",
+            "showWhenOutOfStock": "Mostrar quando esgotado",
+            "showWhenOutOfStockHelp": "Quando ativo, a oferta continua visível na loja após esgotar; o botão de compra fica desativado."
         },
         "stock": {
             "ok": "Disponível",
             "low": "Baixo",
             "out": "Esgotado",
-            "unknown": "Desconhecido"
+            "unknown": "Desconhecido",
+            "outOfStockBadge": "Esgotado"
         },
         "actions": {
             "inventory": "Gerir stock",
@@ -615,13 +618,15 @@
         "goToPayment": "Ir para Pagamento",
         "continueWhatsApp": "Continuar no WhatsApp",
         "buy": "Comprar",
+        "soldOut": "Esgotado",
         "termsAgreement": "Ao finalizar, você concorda com nossos Termos de Uso.",
         "errors": {
             "invalidEmail": "Email inválido.",
             "invalidWhatsapp": "Número de WhatsApp inválido.",
             "whatsappNotConfigured": "Número de WhatsApp não configurado. Entre em contato com o suporte.",
             "orderDataNotFound": "Dados do pedido não encontrados.",
-            "whatsappPopupBlocked": "Não foi possível abrir o WhatsApp. Verifique se o navegador está a bloquear pop-ups."
+            "whatsappPopupBlocked": "Não foi possível abrir o WhatsApp. Verifique se o navegador está a bloquear pop-ups.",
+            "outOfStock": "Esta oferta está esgotada e não pode ser comprada agora."
         },
         "whatsapp": {
             "waitingConfirmation": "Aguardando confirmacao de pagamento..."
@@ -663,7 +668,19 @@
             "fastCheckout": "Checkout mais rápido",
             "loyaltyPoints": "Ganhar pontos de fidelidade",
             "exclusiveOffers": "Ofertas exclusivas"
-        }
+        },
+        "saveOrderTitle": "Guarde este pedido com uma conta",
+        "saveOrderSubtitle": "Crie a sua conta para acompanhar pedidos, ganhar pontos de fidelidade e checkout mais rápido.",
+        "profileSubtitle": "Atualize as suas informações pessoais.",
+        "profilePersonalInfo": "Informações Pessoais",
+        "profileSaveButton": "Guardar Alterações",
+        "profileSaved": "Perfil atualizado.",
+        "profileNotFound": "Crie um pedido para começar a usar o seu perfil.",
+        "pointsBalance": "Saldo de Pontos",
+        "pointsSubtitle": "Veja os seus pontos de fidelidade acumulados.",
+        "pointsHowToEarnTitle": "Como ganhar pontos",
+        "pointsHowToEarnBody": "Ganha pontos sempre que um pedido é entregue.",
+        "pointsHistoryEmpty": "Histórico de transações em breve."
     },
     "validation": {
         "required": "Este campo é obrigatório",

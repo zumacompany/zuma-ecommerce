@@ -6,7 +6,9 @@ import { supabase } from '@/lib/supabase/browser';
 import Link from 'next/link';
 import { getStatusColor, getStatusLabel } from '@/lib/orderStatus';
 import { formatRelativeTime, resolveRelativeTimeLocale } from '@/lib/formatRelativeTime';
-import { ORDER_OPEN_STATUSES } from '@/src/server/modules/orders/order-status';
+import { ORDER_OPEN_STATUSES, type OrderStatus } from '@/src/server/modules/orders/order-status';
+
+const DELIVERED_STATUS: OrderStatus = 'delivered';
 import { normalizeOrderStatus } from '@/src/server/modules/orders/order-status.mapper';
 
 type CustomerStats = {
@@ -67,7 +69,7 @@ export default function CustomerDashboard() {
                             .from('orders')
                             .select('*', { count: 'exact', head: true })
                             .eq('customer_id', customer.customer_id)
-                            .eq('status', 'delivered'),
+                            .eq('status', DELIVERED_STATUS),
                     ]);
 
                     if (activeCountError) {

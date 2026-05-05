@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import { useI18n } from "../lib/i18n";
+import { useI18n } from "../../lib/i18n";
 
 type Brand = { id: string; name: string; slug: string; logo_path?: string | null };
 type Data = { brands: Brand[]; title?: string | null };
@@ -18,9 +18,14 @@ export default function FeaturedBrandsClient({ data }: { data: Data | null }) {
       <div className="container max-w-[1200px] px-4">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold tracking-tight text-foreground">{data.title || t('website.featuredBrands')}</h2>
-          <Link href="/browse" className="text-sm text-primary font-medium hover:underline flex items-center gap-1">
+          <Link
+            href="/browse"
+            className="text-sm text-primary font-medium hover:underline flex items-center gap-1"
+          >
             {t('website.viewAll')}
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
           </Link>
         </div>
 
